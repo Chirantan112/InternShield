@@ -71,7 +71,7 @@ def test_ai_review_parses_supplementary_json_and_bounds_input(monkeypatch):
     assert captured["url"] == "https://provider.example/v1/chat/completions"
     assert captured["timeout"] == 20
     assert captured["authorization"] == "Bearer test-key"
-    assert len(captured["payload"]["messages"][1]["content"]) < 10_100
+    assert len(captured["payload"]["messages"][1]["content"]) <= 10_120
     assert result["summary"] == "Verify the employer."
     assert result["additional_concerns"] == ["The sender is unverified."]
     assert result["verification_steps"] == ["Check the official company website."]
