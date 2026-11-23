@@ -233,3 +233,24 @@ def test_contextual_prompts_do_not_invent_guarantee_when_placement_is_assisted()
     assistance_only = contextual_warnings("We provide 100% placement assistance.")
     assert len(assistance_only) == 1
     assert assistance_only[0]["title"] == "Placement assistance is not a job guarantee"
+
+
+
+def test_real_offer_scarcity_wording_detects_singular_scholarship_slot():
+    from scripts.seed_data import DEFAULT_RULES
+
+    offer = (
+        "Greetings from an organisation. Act fast! ONLY 11 SCHOLARSHIP SLOT LEFT! "
+        "Training fees are Applicable. Complete the application form. "
+        "The program includes training and internship with 100% placement support."
+    )
+    urgency = next(item for item in DEFAULT_RULES if item["name"] == "Urgency or pressure tactics")
+    configured = rule(
+        urgency["name"],
+        urgency["pattern"],
+        urgency["points"],
+        match_type=urgency.get("match_type", "keyword"),
+    )
+    result = analyze_offer(offer, [configured])
+    assert result["score"] == 15
+    assert result["flags"][0]["rule_name"] == "Urgency or pressure tactics"
