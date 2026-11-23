@@ -2,12 +2,13 @@
 
 from time import perf_counter
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import func, select
 
 from ..extensions import db
 from ..models import AnalysisCheck, CheckFlag, DetectionRule, ScamReport
+from ..services.ai_review import AIReviewError, request_ai_review
 from ..services.file_parser import FileParseError, extract_offer_text
 from ..services.rule_engine import InvalidRulePattern, analyze_offer
 from ..utils.decorators import role_required
@@ -51,10 +52,8 @@ def analyze():
             text = extract_offer_text(
                 uploaded,
                 uploaded.filename,
-                max_bytes=current_user._get_current_object().id * 0
-                + 5 * 1024 * 1024,
-                max_characters=current_user._get_current_object().id * 0
-                + 50_000,
+                max_bytes=current_app.config["MAX_CONTENT_LENGTH"],
+                max_characters=current_app.config["MAX_ANALYSIS_CHARACTERS"],
             )
             source_type = "uploaded_file"
         else:
@@ -62,8 +61,8 @@ def analyze():
 
         if not text:
             raise ValueError("Paste an offer or choose a TXT/PDF file to analyze.")
-        if len(text) > 50_000:
-            raise ValueError("Offer text cannot exceed 50,000 characters.")
+        if len(text) > current_app.config["MAX_ANALYSIS_CHARACTERS"]:
+            raise ValueError("Offer text exceeds the configured character limit.")
 
         rules = db.session.scalars(
             select(DetectionRule).where(DetectionRule.is_active.is_(True))
@@ -90,11 +89,22 @@ def analyze():
             )
         db.session.add(check)
         db.session.commit()
+
+        # External processing is strictly opt-in. A provider failure never
+        # discards the saved deterministic result or changes its score.
+        ai_review = None
+        if request.form.get("ai_opt_in") == "yes":
+            try:
+                ai_review = request_ai_review(text, current_app.config)
+            except AIReviewError as exc:
+                flash(str(exc), "warning")
+
         return render_template(
             "student/result.html",
             check=check,
             result=result,
             duration_ms=duration_ms,
+            ai_review=ai_review,
         )
     except (FileParseError, InvalidRulePattern, ValueError) as exc:
         db.session.rollback()
