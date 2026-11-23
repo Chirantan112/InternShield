@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Analyze an offer · InternShield{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-9"><p class="text-primary fw-semibold text-uppercase small mb-1">Offer screening</p><h1 class="h2 mb-2">Analyze an internship or job offer</h1><p class="text-secondary mb-4">Paste the offer message or upload a TXT/PDF file. Your submitted text is saved in your private account history.</p>
+<div class="card border-0 shadow-sm"><div class="card-body p-4"><form method="post" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="mb-3"><label for="offer_text" class="form-label fw-semibold">Paste offer text</label><textarea class="form-control" id="offer_text" name="offer_text" rows="9" maxlength="50000" placeholder="Paste the full internship/job offer message here..."></textarea><div class="form-text">Maximum 50,000 characters. You can paste text or upload a file.</div></div>
+<div class="mb-4"><label for="offer_file" class="form-label fw-semibold">Or upload a file</label><input class="form-control" id="offer_file" name="offer_file" type="file" accept=".txt,.pdf"><div class="form-text">TXT and text-based PDF only; maximum 5 MB. Image-only/scanned PDFs are not supported.</div></div>
+<button class="btn btn-primary" type="submit">Check offer risk</button> <a class="btn btn-outline-secondary" href="{{ url_for('student.dashboard') }}">Cancel</a>
+</form></div></div>
+<div class="alert alert-info mt-3 mb-0"><strong>Privacy:</strong> Core screening is performed by this application. Do not submit passwords, OTPs, or unnecessary personal information.</div>
+</div></div>
+{% endblock %}
