@@ -134,3 +134,53 @@ def test_sensitive_identity_and_otp_terms_are_flagged():
     assert result["score"] == 20
     assert result["risk_level"] == "low"
     assert result["flags"][0]["rule_name"] == "Sensitive information"
+
+
+def test_realistic_paid_training_offer_phrases_are_detected():
+    from scripts.seed_data import DEFAULT_RULES
+
+    offer = (
+        "Today is the final date to apply for the training and internship program. "
+        "Only 18 scholarship slots remain. Applicable training fees are required. "
+        "Please share your ID number with the counsellor. "
+        "The program advertises 100% Placement Assistance. CERTIFICATIONS PROVIDED."
+    )
+    configured_rules = [
+        rule(
+            item["name"],
+            item["pattern"],
+            item["points"],
+            match_type=item.get("match_type", "keyword"),
+        )
+        for item in DEFAULT_RULES
+    ]
+
+    result = analyze_offer(offer, configured_rules)
+
+    assert result["score"] == 85
+    assert result["risk_level"] == "high"
+    detected_names = {flag["rule_name"] for flag in result["flags"]}
+    assert "Upfront fees or deposits" in detected_names
+    assert "Sensitive personal or financial information" in detected_names
+    assert "Urgency or pressure tactics" in detected_names
+    assert "Unrealistic employment promises" in detected_names
+    assert "Suspicious formatting or language" in detected_names
+
+
+def test_keyword_pattern_upgrade_preserves_admin_terms_and_is_idempotent():
+    from scripts.seed_data import merge_keyword_patterns
+
+    original = "custom administrator phrase, registration fee"
+    upgraded = merge_keyword_patterns(
+        original,
+        "registration fee, applicable training fees, training fees",
+    )
+    repeated = merge_keyword_patterns(
+        upgraded,
+        "registration fee, applicable training fees, training fees",
+    )
+
+    assert upgraded.startswith(original)
+    assert "custom administrator phrase" in upgraded
+    assert upgraded.count("applicable training fees") == 1
+    assert repeated == upgraded
