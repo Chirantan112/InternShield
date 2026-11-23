@@ -47,6 +47,9 @@ def test_student_history_is_private_and_delete_is_owner_scoped(client, student, 
         db.session.commit()
         check_id = private_check.id
 
+    history_response = client.get("/student/history")
+    assert history_response.status_code == 200
+    assert b"Private offer" not in history_response.data
     response = client.post(f"/student/history/{check_id}/delete")
     assert response.status_code == 404
     with app.app_context():
@@ -111,7 +114,23 @@ def test_admin_can_create_edit_and_disable_keyword_rule(admin_client, app):
 
         rule = db.session.get(DetectionRule, rule_id)
         assert rule.points == 35
-        assert rule.is_active is False
+        from internshield.services.rule_engine import analyze_offer
+
+        updated_result = analyze_offer("Please pay immediately.", [rule])
+        assert updated_result["score"] == 35
+        rule.is_active = False
+        disabled_result = analyze_offer("Please pay immediately.", [rule])
+        assert disabled_result["score"] == 0
+        db.session.commit()
+    response = admin_client.post(
+        f"/admin/rules/{rule_id}/delete",
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    with app.app_context():
+        from internshield.models import DetectionRule
+
+        assert db.session.get(DetectionRule, rule_id) is None
 
 
 def test_admin_can_review_scam_report(admin_client, app):
