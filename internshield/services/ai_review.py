@@ -6,6 +6,7 @@ deterministic rule-engine score or risk band.
 
 import json
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
 
@@ -29,6 +30,14 @@ def request_ai_review(offer_text: str, config: dict) -> dict:
     if not isinstance(offer_text, str) or not offer_text.strip():
         raise AIReviewError("There is no offer text to review.")
 
+    parsed_url = urlsplit(base_url)
+    local_hosts = {"localhost", "127.0.0.1", "::1"}
+    if parsed_url.scheme != "https" and not (
+        parsed_url.scheme == "http" and parsed_url.hostname in local_hosts
+    ):
+        raise AIReviewError("The AI endpoint must use HTTPS (HTTP is allowed only for localhost).")
+    if not parsed_url.hostname or parsed_url.username or parsed_url.password:
+        raise AIReviewError("The configured AI endpoint URL is invalid.")
     endpoint = (
         base_url
         if base_url.endswith("/chat/completions")
