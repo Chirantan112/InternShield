@@ -64,15 +64,23 @@ _CONTEXT_PATTERNS = {
     "payment": r"\b(?:fee|fees|payment|pay|deposit|charges|tuition|registration amount)\b",
     "external_form": r"(?:forms\.gle|docs\.google\.com/forms|typeform\.com|jotform\.com|formstack\.com|\bgoogle form\b|\bapplication form\b|\bonboarding form\b)",
     "placement_assistance": r"\bplacement assistance\b|\bcareer support\b|\bplacement support\b",
-    "placement_guarantee": r"\b(?:guaranteed? placement|100\s*%\s*placement|assured placement|job guarantee)\b",
+    "placement_guarantee": r"\b(?:guaranteed? placement|100\s*%\s*placement(?!\s*(?:assistance|support))|assured placement|job guarantee)\b",
     "affiliation": r"\b(?:in association with|associated with|in partnership with|partnered with|affiliated with|certified by|recognised by|recognized by|approved by)\b",
 }
 
 
 def contextual_warnings(text: str) -> list[dict[str, str]]:
     """Return generic verification prompts without changing the risk score."""
+    def has_unnegated_claim(pattern: str) -> bool:
+        for match in re.finditer(pattern, text, flags=re.IGNORECASE):
+            prefix = text[max(0, match.start() - 24):match.start()]
+            if re.search(r"\b(?:no|not|never|without)\s*$", prefix, flags=re.IGNORECASE):
+                continue
+            return True
+        return False
+
     found = {
-        name: bool(re.search(pattern, text, flags=re.IGNORECASE))
+        name: has_unnegated_claim(pattern)
         for name, pattern in _CONTEXT_PATTERNS.items()
     }
     warnings: list[dict[str, str]] = []
