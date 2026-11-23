@@ -184,3 +184,49 @@ def test_keyword_pattern_upgrade_preserves_admin_terms_and_is_idempotent():
     assert "custom administrator phrase" in upgraded
     assert upgraded.count("applicable training fees") == 1
     assert repeated == upgraded
+
+
+
+def test_contextual_training_discount_form_and_placement_prompts_do_not_change_score():
+    offer = (
+        "Skill development training and internship program. "
+        "Use referral code for a 30% discount. Complete the Google Form for onboarding. "
+        "We provide placement assistance and career support."
+    )
+    result = analyze_offer(offer, [])
+    titles = {item["title"] for item in result["contextual_warnings"]}
+    assert result["score"] == 0
+    assert "Training is presented alongside an internship" in titles
+    assert "Discount, scholarship, or referral language" in titles
+    assert "Application or onboarding form mentioned" in titles
+    assert "Placement assistance is not a job guarantee" in titles
+
+
+def test_contextual_prompts_do_not_treat_discount_or_assistance_as_proof_of_fraud():
+    from internshield.services.rule_engine import contextual_warnings
+    assert contextual_warnings("A 20% discount is available.") == []
+    warnings = contextual_warnings(
+        "A software internship with career support and placement assistance."
+    )
+    assert len(warnings) == 1
+    assert "not a job guarantee" in warnings[0]["title"].lower()
+
+
+def test_contextual_payment_and_affiliation_prompts_are_generic_and_score_independent():
+    offer = (
+        "Training and internship programme with mandatory registration fees. "
+        "Delivered in partnership with an external institution."
+    )
+    result = analyze_offer(offer, [rule("Fee", "registration fees", 30)])
+    titles = {item["title"] for item in result["contextual_warnings"]}
+    assert result["score"] == 30
+    assert "Payment language in a training or internship offer" in titles
+    assert "Third-party affiliation or approval claim" in titles
+
+
+def test_contextual_prompts_do_not_invent_guarantee_when_placement_is_assisted():
+    from internshield.services.rule_engine import contextual_warnings
+    warnings = contextual_warnings(
+        "Placement assistance is available; no guaranteed placement is promised."
+    )
+    assert warnings == []
