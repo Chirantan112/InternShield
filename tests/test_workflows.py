@@ -150,3 +150,46 @@ def test_unauthenticated_user_is_redirected_to_login(client):
     response = client.get("/student/")
     assert response.status_code == 302
     assert "/login" in response.headers["Location"]
+
+
+def test_student_can_analyze_txt_upload(client, student):
+    from io import BytesIO
+
+    response = client.post(
+        "/student/analyze",
+        data={"offer_file": (BytesIO(b"Please pay a registration fee."), "offer.txt")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    assert b"Fee request" in response.data
+
+
+def test_student_upload_rejects_unsupported_file(client, student):
+    from io import BytesIO
+
+    response = client.post(
+        "/student/analyze",
+        data={"offer_file": (BytesIO(b"not supported"), "offer.exe")},
+        content_type="multipart/form-data",
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"Unsupported file type" in response.data
+
+
+def test_ai_opt_in_does_not_block_rule_based_result_when_disabled(client, student, app):
+    response = client.post(
+        "/student/analyze",
+        data={
+            "offer_text": "Please pay a registration fee.",
+            "ai_opt_in": "yes",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"30" in response.data
+    assert b"not configured" in response.data
+    with app.app_context():
+        saved = db.session.query(AnalysisCheck).one()
+        assert saved.score == 30
+        assert saved.risk_level == "low"
