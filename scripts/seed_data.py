@@ -1,14 +1,17 @@
 """Idempotently create an administrator and the default detection rules.
 
 Set ADMIN_EMAIL, ADMIN_PASSWORD, and ADMIN_NAME in the local environment
-before running: flask --app run.py seed-data
+before running: python -m scripts.seed_data
 No default credentials are embedded in the repository.
 """
 
 import os
 import sys
 
+from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash
+
+load_dotenv()
 
 from internshield import create_app
 from internshield.extensions import db
