@@ -34,6 +34,10 @@ def create_app(config_name: str | None = None) -> Flask:
     login_manager.init_app(app)
     csrf.init_app(app)
 
+    from .routes.auth import auth_bp
+
+    app.register_blueprint(auth_bp)
+
     @login_manager.user_loader
     def load_user(user_id: str):
         from .models import User
