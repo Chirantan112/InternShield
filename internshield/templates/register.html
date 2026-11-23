@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Create account · InternShield{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4 p-md-5">
+        <p class="text-primary fw-semibold text-uppercase small mb-2">Get started</p>
+        <h1 class="h3 mb-2">Create your student account</h1>
+        <p class="text-secondary mb-4">Your offer checks and history will be private to your account.</p>
+        <form method="post" action="{{ url_for('auth.register') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="name" class="form-label">Full name</label>
+            <input class="form-control" id="name" name="name" type="text"
+                   autocomplete="name" maxlength="100" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input class="form-control" id="email" name="email" type="email"
+                   autocomplete="email" maxlength="255" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input class="form-control" id="password" name="password" type="password"
+                   autocomplete="new-password" minlength="10" required>
+            <div class="form-text">Use at least 10 characters.</div>
+          </div>
+          <div class="mb-4">
+            <label for="password_confirm" class="form-label">Confirm password</label>
+            <input class="form-control" id="password_confirm" name="password_confirm"
+                   type="password" autocomplete="new-password" minlength="10" required>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Create account</button>
+        </form>
+        <p class="text-center text-secondary mt-4 mb-0">
+          Already registered? <a href="{{ url_for('auth.login') }}">Log in</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
