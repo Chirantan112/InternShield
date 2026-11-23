@@ -124,3 +124,13 @@ def test_formatting_regex_detects_repeated_punctuation_and_caps():
     capitalized = analyze_offer("INTERNSHIP OPPORTUNITY", [formatting_rule])
     assert repeated["score"] == 5
     assert capitalized["score"] == 5
+
+
+def test_sensitive_identity_and_otp_terms_are_flagged():
+    result = analyze_offer(
+        "Please share your Aadhaar number and OTP to complete onboarding.",
+        [rule("Sensitive information", "aadhaar, otp", 20)],
+    )
+    assert result["score"] == 20
+    assert result["risk_level"] == "low"
+    assert result["flags"][0]["rule_name"] == "Sensitive information"
