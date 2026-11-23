@@ -55,6 +55,83 @@ def _risk_level(score: int) -> str:
     return "high"
 
 
+
+
+_CONTEXT_PATTERNS = {
+    "training": r"\b(?:training|skill development|course|bootcamp|certification programme|certification program)\b",
+    "internship": r"\b(?:internship|intern|apprenticeship|trainee role)\b",
+    "discount": r"\b(?:discount|scholarship|promo(?:tional)? code|coupon|referral code|limited.time offer)\b",
+    "payment": r"\b(?:fee|fees|payment|pay|deposit|charges|tuition|registration amount)\b",
+    "external_form": r"(?:forms\.gle|docs\.google\.com/forms|typeform\.com|jotform\.com|formstack\.com|\bgoogle form\b|\bapplication form\b|\bonboarding form\b)",
+    "placement_assistance": r"\bplacement assistance\b|\bcareer support\b|\bplacement support\b",
+    "placement_guarantee": r"\b(?:guaranteed? placement|100\s*%\s*placement|assured placement|job guarantee)\b",
+    "affiliation": r"\b(?:in association with|associated with|in partnership with|partnered with|affiliated with|certified by|recognised by|recognized by|approved by)\b",
+}
+
+
+def contextual_warnings(text: str) -> list[dict[str, str]]:
+    """Return generic verification prompts without changing the risk score."""
+    found = {
+        name: bool(re.search(pattern, text, flags=re.IGNORECASE))
+        for name, pattern in _CONTEXT_PATTERNS.items()
+    }
+    warnings: list[dict[str, str]] = []
+
+    if found["training"] and found["internship"]:
+        warnings.append({
+            "title": "Training is presented alongside an internship",
+            "explanation": (
+                "Check whether this is a genuine work-based internship or a paid "
+                "training/certification course, and request written details of duties, "
+                "supervision, duration, and any charges."
+            ),
+        })
+    if found["discount"] and (found["training"] or found["internship"]):
+        warnings.append({
+            "title": "Discount, scholarship, or referral language",
+            "explanation": (
+                "Ask for the complete fee schedule, refund terms, and eligibility "
+                "conditions in writing. A discount or referral code alone does not "
+                "mean the offer is fraudulent."
+            ),
+        })
+    if found["payment"] and (found["training"] or found["internship"]):
+        warnings.append({
+            "title": "Payment language in a training or internship offer",
+            "explanation": (
+                "Confirm whether payment is mandatory, who receives it, what it covers, "
+                "and whether a refund policy exists. Do not pay to secure a job without "
+                "independently verifying the employer and role."
+            ),
+        })
+    if found["external_form"]:
+        warnings.append({
+            "title": "Application or onboarding form mentioned",
+            "explanation": (
+                "Verify the form's owner and destination through the organisation's "
+                "official website or a known contact. Do not submit passwords, OTPs, "
+                "bank credentials, or unnecessary identity documents."
+            ),
+        })
+    if found["placement_assistance"] and not found["placement_guarantee"]:
+        warnings.append({
+            "title": "Placement assistance is not a job guarantee",
+            "explanation": (
+                "Treat assistance or career-support wording as a service claim, not a "
+                "promise of employment. Ask what support is actually provided and "
+                "whether outcomes are documented."
+            ),
+        })
+    if found["affiliation"]:
+        warnings.append({
+            "title": "Third-party affiliation or approval claim",
+            "explanation": (
+                "Verify the claimed relationship directly with the named institution, "
+                "company, or accrediting body using its official contact channels."
+            ),
+        })
+    return warnings
+
 def analyze_offer(text: str, rules: Iterable[Any]) -> dict[str, Any]:
     """Analyze offer text using active rules and return an explainable result.
 
@@ -107,6 +184,7 @@ def analyze_offer(text: str, rules: Iterable[Any]) -> dict[str, Any]:
         "score": score,
         "risk_level": _risk_level(score),
         "flags": detected_flags,
+        "contextual_warnings": contextual_warnings(text),
         "raw_score": raw_score,
         "score_capped": raw_score > 100,
         "disclaimer": (
