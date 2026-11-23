@@ -63,7 +63,7 @@ The system is an aid to decision-making, not a fraud-detection authority. It doe
 
 ### 5.1 Technology stack
 
-Python 3.12, Flask, Flask-SQLAlchemy, SQLite, Flask-Login, Flask-WTF, Werkzeug, PyMuPDF, Bootstrap 5, JavaScript, and pytest.
+Python 3.12, Flask and Flask-SQLAlchemy [1, 4], Flask-Login [2], Flask-WTF [3], Werkzeug [6], PyMuPDF [5], Bootstrap 5, JavaScript, and pytest [7].
 
 ### 5.2 Main workflow
 
@@ -91,7 +91,7 @@ Risk bands: **0–30 Low**, **31–60 Medium**, and **61–100 High**. A single 
 
 ### 5.4 Security and privacy controls
 
-Public registration always creates a student account. Administrator accounts are created by a seed script using local environment variables; no default admin password or API key is committed. Passwords are stored as hashes. CSRF protection applies to state-changing forms. Student history reads and deletes are owner-scoped. Uploads are parsed in memory and are not stored in the public static directory.
+Public registration always creates a student account. Administrator accounts are created by a seed script using local environment variables; no default admin password or API key is committed. Passwords are stored as hashes using Werkzeug security helpers [6]. CSRF protection applies to state-changing forms [3]. Student history reads and deletes are owner-scoped. Uploads are parsed in memory and are not stored in the public static directory.
 
 The optional AI review is disabled by default, requires explicit consent for each submission, uses a bounded text excerpt, and requires HTTPS for remote providers. Its output is supplementary and cannot change the deterministic score.
 
@@ -108,7 +108,7 @@ Insert actual screenshots captured from the running application:
 
 ## 6. Testing and results
 
-Automated tests are run by GitHub Actions on Python 3.12. The suite includes rule scoring and thresholds, large-input performance, TXT/PDF parsing, invalid uploads, authentication, role restrictions, student data isolation, rule administration, report review, seeding, and optional AI safeguards.
+Automated tests are run by GitHub Actions on Python 3.12 using pytest [7]. The suite includes rule scoring and thresholds, large-input performance, TXT/PDF parsing, invalid uploads, authentication, role restrictions, student data isolation, rule administration, report review, seeding, and optional AI safeguards.
 
 **Verified final code CI:** 45 automated tests passed in 4.80 seconds on the GitHub Actions runner using Python 3.12. Python module compilation also passed. The run is recorded at https://github.com/Chirantan112/InternShield/actions/runs/45144802303. This is the CI suite duration, not the measured end-to-end response time on the demonstration laptop.
 
