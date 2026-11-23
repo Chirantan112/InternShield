@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}My scam reports · InternShield{% endblock %}
+{% block content %}
+<div class="mb-4"><p class="text-primary fw-semibold text-uppercase small mb-1">Community safety</p><h1 class="h2 mb-0">Your submitted reports</h1></div>
+<div class="card border-0 shadow-sm"><div class="card-body p-4">{% if reports %}{% for report in reports %}<div class="border-bottom py-3"><div class="d-flex justify-content-between flex-wrap gap-2"><strong>{{ report.company_name }}</strong><span class="badge text-bg-{{ 'warning' if report.status == 'pending' else ('success' if report.status == 'approved' else 'secondary') }}">{{ report.status|title }}</span></div><p class="text-secondary small mb-1">{{ report.created_at.strftime('%d %b %Y, %H:%M') }}</p><p class="mb-0">{{ report.offer_details }}</p>{% if report.contact_or_website %}<p class="small text-secondary mb-0 mt-1">{{ report.contact_or_website }}</p>{% endif %}</div>{% endfor %}{% else %}<p class="text-secondary mb-0">You have not submitted any reports.</p>{% endif %}</div></div>
+{% endblock %}
