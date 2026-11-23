@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="InternShield helps students review internship and job offers for common warning signs.">
+  <title>{% block title %}InternShield{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand fw-semibold" href="{{ url_for('auth.login') }}">InternShield</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+              aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <div class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+          {% if current_user.is_authenticated %}
+            {% if current_user.is_admin %}
+              <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Admin dashboard</a>
+            {% else %}
+              <a class="nav-link" href="{{ url_for('student.dashboard') }}">Dashboard</a>
+            {% endif %}
+            <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-outline-light btn-sm" type="submit">Log out</button>
+            </form>
+          {% else %}
+            <a class="nav-link" href="{{ url_for('auth.login') }}">Log in</a>
+            <a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">Create account</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4 py-md-5">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div aria-live="polite" aria-atomic="true">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-top bg-white py-3 mt-auto">
+    <div class="container small text-secondary d-flex flex-column flex-md-row justify-content-between gap-1">
+      <span>InternShield · Student offer risk screening</span>
+      <span>Risk scores are preliminary indicators, not proof of fraud.</span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</body>
+</html>
