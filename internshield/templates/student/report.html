@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Report a suspicious offer · InternShield{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8"><p class="text-primary fw-semibold text-uppercase small mb-1">Community safety</p><h1 class="h2 mb-2">Report a suspicious offer</h1><p class="text-secondary mb-4">Send the details to the InternShield administrator for review. Avoid including your own passwords, OTPs, or identity documents.</p>
+<div class="card border-0 shadow-sm"><div class="card-body p-4"><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="mb-3"><label class="form-label" for="company_name">Company / recruiter name</label><input class="form-control" id="company_name" name="company_name" maxlength="160" required></div>
+<div class="mb-3"><label class="form-label" for="contact_or_website">Website, email, phone, or contact (optional)</label><input class="form-control" id="contact_or_website" name="contact_or_website" maxlength="500"></div>
+<div class="mb-4"><label class="form-label" for="offer_details">Offer details and why you suspect it</label><textarea class="form-control" id="offer_details" name="offer_details" rows="7" maxlength="20000" required></textarea></div>
+<button class="btn btn-primary" type="submit">Submit report</button> <a class="btn btn-outline-secondary" href="{{ url_for('student.dashboard') }}">Cancel</a>
+</form></div></div></div></div>
+{% endblock %}
