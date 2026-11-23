@@ -230,3 +230,6 @@ def test_contextual_prompts_do_not_invent_guarantee_when_placement_is_assisted()
         "Placement assistance is available; no guaranteed placement is promised."
     )
     assert warnings == []
+    assistance_only = contextual_warnings("We provide 100% placement assistance.")
+    assert len(assistance_only) == 1
+    assert assistance_only[0]["title"] == "Placement assistance is not a job guarantee"
