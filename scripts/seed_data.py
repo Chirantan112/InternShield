@@ -57,8 +57,9 @@ DEFAULT_RULES = [
     },
     {
         "name": "Suspicious formatting or language",
-        "description": "Repeated punctuation or common high-pressure wording may indicate an unprofessional message; review context carefully.",
-        "pattern": "!!!, $$$, dear candidate urgently",
+        "description": "Repeated punctuation or long all-capital words may indicate unprofessional formatting; review context carefully.",
+        "pattern": r"(?:[!?.,]){3,}|\\b[A-Z]{8,}\\b",
+        "match_type": "regex",
         "points": 5,
     },
 ]
@@ -102,10 +103,12 @@ def seed() -> None:
     for item in DEFAULT_RULES:
         existing = db.session.query(DetectionRule).filter_by(name=item["name"]).one_or_none()
         if existing is None:
+            rule_data = dict(item)
+            match_type = rule_data.pop("match_type", "keyword")
             db.session.add(
                 DetectionRule(
-                    **item,
-                    match_type="keyword",
+                    **rule_data,
+                    match_type=match_type,
                     is_active=True,
                 )
             )
