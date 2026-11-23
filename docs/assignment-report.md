@@ -110,7 +110,7 @@ Insert actual screenshots captured from the running application:
 
 Automated tests are run by GitHub Actions on Python 3.12. The suite includes rule scoring and thresholds, large-input performance, TXT/PDF parsing, invalid uploads, authentication, role restrictions, student data isolation, rule administration, report review, seeding, and optional AI safeguards.
 
-**Verified CI baseline:** 44 automated tests passed in 4.84 seconds on the GitHub Actions runner (before the final added sensitive-information regression test). The final CI run should be recorded below after it completes.
+**Verified final code CI:** 45 automated tests passed in 4.80 seconds on the GitHub Actions runner using Python 3.12. Python module compilation also passed. The run is recorded at https://github.com/Chirantan112/InternShield/actions/runs/45144802303. This is the CI suite duration, not the measured end-to-end response time on the demonstration laptop.
 
 | Test ID | Test scenario | Expected result | Result |
 |---|---|---|---|
