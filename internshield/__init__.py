@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 import click
-from flask import Flask, jsonify
+from flask import Flask, jsonify, redirect, url_for
 from flask_wtf.csrf import CSRFError
 
 from config import CONFIG_BY_NAME
@@ -41,6 +41,18 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(student_bp)
     app.register_blueprint(admin_bp)
+
+    @app.get("/")
+    def home():
+        """Send visitors to the login page or their role-specific dashboard."""
+        if not login_manager:
+            return redirect(url_for("auth.login"))
+        from flask_login import current_user
+
+        if current_user.is_authenticated:
+            destination = "admin.dashboard" if current_user.is_admin else "student.dashboard"
+            return redirect(url_for(destination))
+        return redirect(url_for("auth.login"))
 
     @login_manager.user_loader
     def load_user(user_id: str):
