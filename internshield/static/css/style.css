@@ -1,0 +1,13 @@
+:root { color-scheme: light; }
+body { min-height: 100vh; display: flex; flex-direction: column; color: #182230; }
+main { flex: 1 0 auto; }
+.card { border-radius: 1rem; }
+.navbar-brand { letter-spacing: .02em; }
+.form-control:focus, .form-select:focus { border-color: #7aa7f7; box-shadow: 0 0 0 .2rem rgba(13,110,253,.12); }
+.risk-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: .35rem .75rem; font-size: .82rem; font-weight: 700; }
+.risk-low { color: #146c43; background: #d1e7dd; }
+.risk-medium { color: #805b00; background: #fff3cd; }
+.risk-high { color: #842029; background: #f8d7da; }
+.offer-preview { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 24rem; overflow: auto; padding: 1rem; border-radius: .65rem; background: #f6f8fa; color: #263445; font: inherit; font-size: .9rem; }
+.table > :not(caption) > * > * { padding-top: .8rem; padding-bottom: .8rem; }
+footer { flex-shrink: 0; }
