@@ -58,7 +58,7 @@ DEFAULT_RULES = [
     {
         "name": "Suspicious formatting or language",
         "description": "Repeated punctuation or long all-capital words may indicate unprofessional formatting; review context carefully.",
-        "pattern": r"(?:[!?.,]){3,}|\\b[A-Z]{8,}\\b",
+        "pattern": r"(?:[!?.,]){3,}|\b[A-Z]{8,}\b",
         "match_type": "regex",
         "points": 5,
     },
