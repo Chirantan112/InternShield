@@ -6,6 +6,7 @@ No default credentials are embedded in the repository.
 """
 
 import os
+import re
 import sys
 
 from dotenv import load_dotenv
@@ -21,14 +22,14 @@ from internshield.models import DetectionRule, User
 DEFAULT_RULES = [
     {
         "name": "Upfront fees or deposits",
-        "description": "The offer appears to request registration, processing, training, or security fees before employment.",
-        "pattern": "registration fee, processing fee, security deposit, application fee, pay to apply, payment required, refundable deposit, training fee",
+        "description": "The offer appears to request registration, processing, training, or security fees before employment. Paid training is not automatically fraudulent, but applicants should verify the provider, total cost, refund terms, and whether the opportunity is actually employment.",
+        "pattern": "registration fee, processing fee, security deposit, application fee, pay to apply, payment required, refundable deposit, training fee, training fees, applicable training fees, fees are required, program fee, programme fee, course fee, base fee, training charges, paid training",
         "points": 30,
     },
     {
         "name": "Sensitive personal or financial information",
-        "description": "The message asks for highly sensitive identity, banking, card, password, or one-time-password details.",
-        "pattern": "aadhaar, aadhar, pan card, bank account, account number, otp, one time password, password, debit card, credit card, cvv",
+        "description": "The message asks for sensitive identity, banking, card, password, or one-time-password details. Never share passwords, OTPs, or payment-card security details with a recruiter.",
+        "pattern": "aadhaar, aadhar, pan card, bank account, account number, otp, one time password, password, debit card, credit card, cvv, id number, identification number, government id, identity proof, id proof",
         "points": 20,
     },
     {
@@ -40,7 +41,7 @@ DEFAULT_RULES = [
     {
         "name": "Urgency or pressure tactics",
         "description": "The offer uses urgency or scarcity language that may pressure applicants into acting without verification.",
-        "pattern": "within 24 hours, immediately, last chance, limited seats, act now, urgent response, today only",
+        "pattern": "within 24 hours, immediately, last chance, limited seats, act now, urgent response, today only, final date to apply, slots remain, slots left, scholarship seats, scholarship slots, batch closes today",
         "points": 15,
     },
     {
@@ -63,6 +64,25 @@ DEFAULT_RULES = [
         "points": 5,
     },
 ]
+
+
+def merge_keyword_patterns(existing_pattern: str, default_pattern: str) -> str:
+    """Append missing default keywords without deleting administrator terms."""
+    existing_terms = [
+        term.strip()
+        for term in re.split(r"[,;\n]+", existing_pattern or "")
+        if term.strip()
+    ]
+    known_terms = {term.casefold() for term in existing_terms}
+    merged_terms = list(existing_terms)
+
+    for term in re.split(r"[,;\n]+", default_pattern or ""):
+        candidate = term.strip()
+        if candidate and candidate.casefold() not in known_terms:
+            merged_terms.append(candidate)
+            known_terms.add(candidate.casefold())
+
+    return ", ".join(merged_terms)
 
 
 def required_env(name: str) -> str:
@@ -100,6 +120,7 @@ def seed() -> None:
         print(f"Administrator account {admin_email} already exists; left unchanged.")
 
     added = 0
+    updated = 0
     for item in DEFAULT_RULES:
         existing = db.session.query(DetectionRule).filter_by(name=item["name"]).one_or_none()
         if existing is None:
@@ -113,8 +134,14 @@ def seed() -> None:
                 )
             )
             added += 1
+        elif item.get("match_type", "keyword") == "keyword" and existing.match_type == "keyword":
+            merged_pattern = merge_keyword_patterns(existing.pattern, item["pattern"])
+            if merged_pattern != existing.pattern:
+                existing.pattern = merged_pattern
+                updated += 1
+
     db.session.commit()
-    print(f"Seeded {added} default detection rule(s).")
+    print(f"Seeded {added} new default rule(s); updated {updated} existing keyword rule(s).")
 
 
 def main() -> None:
