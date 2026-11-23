@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import BinaryIO
 
-import fitz  # PyMuPDF
+import pymupdf
 
 
 DEFAULT_MAX_BYTES = 5 * 1024 * 1024
@@ -56,7 +56,7 @@ def extract_offer_text(
             ) from exc
     else:
         try:
-            with fitz.open(stream=data, filetype="pdf") as document:
+            with pymupdf.open(stream=data, filetype="pdf") as document:
                 if document.needs_pass:
                     raise FileParseError("Password-protected PDF files are not supported.")
                 if document.page_count == 0:
@@ -78,7 +78,7 @@ def extract_offer_text(
                 text = "\n".join(extracted_parts)
         except FileParseError:
             raise
-        except (fitz.FileDataError, fitz.EmptyFileError, RuntimeError, ValueError) as exc:
+        except (pymupdf.FileDataError, pymupdf.EmptyFileError, RuntimeError, ValueError) as exc:
             raise FileParseError(
                 "The PDF is corrupt, invalid, or could not be opened."
             ) from exc
