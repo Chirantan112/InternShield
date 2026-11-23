@@ -116,7 +116,7 @@ def test_large_offer_text_is_processed_within_three_seconds():
 def test_formatting_regex_detects_repeated_punctuation_and_caps():
     formatting_rule = rule(
         "Formatting",
-        r"(?:[!?.,]){3,}|\\b[A-Z]{8,}\\b",
+        r"(?:[!?.,]){3,}|\b[A-Z]{8,}\b",
         5,
         match_type="regex",
     )
