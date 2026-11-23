@@ -104,6 +104,15 @@ def test_admin_can_create_edit_and_disable_keyword_rule(admin_client, app):
         follow_redirects=True,
     )
     assert response.status_code == 200
+    with app.app_context():
+        from internshield.models import DetectionRule
+        from internshield.services.rule_engine import analyze_offer
+
+        rule = db.session.get(DetectionRule, rule_id)
+        assert rule.points == 35
+        updated_result = analyze_offer("Please pay immediately.", [rule])
+        assert updated_result["score"] == 35
+
     response = admin_client.post(
         f"/admin/rules/{rule_id}/toggle",
         follow_redirects=True,
@@ -111,17 +120,13 @@ def test_admin_can_create_edit_and_disable_keyword_rule(admin_client, app):
     assert response.status_code == 200
     with app.app_context():
         from internshield.models import DetectionRule
-
-        rule = db.session.get(DetectionRule, rule_id)
-        assert rule.points == 35
         from internshield.services.rule_engine import analyze_offer
 
-        updated_result = analyze_offer("Please pay immediately.", [rule])
-        assert updated_result["score"] == 35
-        rule.is_active = False
+        rule = db.session.get(DetectionRule, rule_id)
+        assert rule.is_active is False
         disabled_result = analyze_offer("Please pay immediately.", [rule])
         assert disabled_result["score"] == 0
-        db.session.commit()
+
     response = admin_client.post(
         f"/admin/rules/{rule_id}/delete",
         follow_redirects=True,
@@ -131,7 +136,6 @@ def test_admin_can_create_edit_and_disable_keyword_rule(admin_client, app):
         from internshield.models import DetectionRule
 
         assert db.session.get(DetectionRule, rule_id) is None
-
 
 def test_admin_can_review_scam_report(admin_client, app):
     with app.app_context():
