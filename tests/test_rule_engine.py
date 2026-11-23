@@ -96,3 +96,18 @@ def test_invalid_input_and_rule_points_are_rejected():
 def test_invalid_regex_is_reported():
     with pytest.raises(InvalidRulePattern):
         analyze_offer("test", [rule("Bad regex", "[", 10, match_type="regex")])
+
+
+def test_large_offer_text_is_processed_within_three_seconds():
+    from time import perf_counter
+
+    text = ("A genuine internship description with project details. " * 900)[:49_900]
+    text += " registration fee"
+    started = perf_counter()
+    result = analyze_offer(
+        text,
+        [rule("Fee", "registration fee", 30)],
+    )
+    elapsed = perf_counter() - started
+    assert result["score"] == 30
+    assert elapsed < 3.0
