@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if rule else 'Add' }} rule · InternShield{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-8"><p class="text-primary fw-semibold text-uppercase small mb-1">Administration</p><h1 class="h2 mb-3">{{ 'Edit detection rule' if rule else 'Add detection rule' }}</h1>
+<div class="card border-0 shadow-sm"><div class="card-body p-4"><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="mb-3"><label class="form-label" for="name">Rule name</label><input class="form-control" id="name" name="name" maxlength="120" value="{{ rule.name if rule else '' }}" required></div>
+<div class="mb-3"><label class="form-label" for="description">Explanation shown to students</label><textarea class="form-control" id="description" name="description" maxlength="500" rows="2" required>{{ rule.description if rule else '' }}</textarea></div>
+<div class="mb-3"><label class="form-label" for="pattern">Keywords or phrases</label><textarea class="form-control" id="pattern" name="pattern" maxlength="1000" rows="3" required>{{ rule.pattern if rule else '' }}</textarea><div class="form-text">Separate terms with commas, semicolons, or new lines. Matching ignores case.</div></div>
+<div class="mb-4"><label class="form-label" for="points">Risk points (0–100)</label><input class="form-control" id="points" name="points" type="number" min="0" max="100" value="{{ rule.points if rule else 10 }}" required></div>
+<button class="btn btn-primary" type="submit">Save rule</button> <a class="btn btn-outline-secondary" href="{{ url_for('admin.rules') }}">Cancel</a>
+</form></div></div></div></div>
+{% endblock %}
