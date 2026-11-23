@@ -41,7 +41,7 @@ DEFAULT_RULES = [
     {
         "name": "Urgency or pressure tactics",
         "description": "The offer uses urgency or scarcity language that may pressure applicants into acting without verification.",
-        "pattern": "within 24 hours, immediately, last chance, limited seats, act now, urgent response, today only, final date to apply, slots remain, slots left, scholarship seats, scholarship slots, batch closes today",
+        "pattern": "within 24 hours, immediately, last chance, limited seats, act now, urgent response, today only, final date to apply, slots remain, slots left, slot left, scholarship seat, scholarship seats, scholarship slot, scholarship slots, scholarship slot left, batch closes today, act fast, register now",
         "points": 15,
     },
     {
