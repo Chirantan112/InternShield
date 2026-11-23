@@ -21,8 +21,13 @@
           {% if current_user.is_authenticated %}
             {% if current_user.is_admin %}
               <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Admin dashboard</a>
+              <a class="nav-link" href="{{ url_for('admin.rules') }}">Rules</a>
+              <a class="nav-link" href="{{ url_for('admin.reports') }}">Reports</a>
             {% else %}
               <a class="nav-link" href="{{ url_for('student.dashboard') }}">Dashboard</a>
+              <a class="nav-link" href="{{ url_for('student.analyze') }}">Analyze</a>
+              <a class="nav-link" href="{{ url_for('student.history') }}">History</a>
+              <a class="nav-link" href="{{ url_for('student.report_scam') }}">Report</a>
             {% endif %}
             <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
