@@ -42,7 +42,7 @@ Each rule contributes at most once per analysis; the total is capped at 100.
 | 31–60 | Medium |
 | 61–100 | High |
 
-The score is intentionally explainable and configurable. The current implementation uses literal keyword/phrase matching for administrator-managed rules. It does not verify company registrations, sender authenticity, or live website reputation.
+The score is intentionally explainable and configurable. The current implementation uses literal keyword/phrase matching for administrator-managed rules. It does not verify company registrations, sender authenticity, or live website reputation. Mentions of well-known companies, universities, or certifications are not proof that an affiliation is genuine; applicants must verify those claims independently.
 
 ## Technology
 
@@ -99,7 +99,7 @@ Use Python 3.12 or 3.13 for dependency compatibility.
    python -m scripts.seed_data
    ```
 
-   The seeding script is idempotent: it creates missing default rules and the configured admin, and does not silently elevate an existing student account.
+   The seeding script is idempotent: it creates missing default rules and the configured admin, and does not silently elevate an existing student account. When a later release adds default keyword phrases, rerunning this command appends missing defaults to existing keyword rules while preserving administrator-added phrases and existing account records. It does not reset the database or overwrite the admin password.
 
 6. Start the development server:
 
@@ -108,6 +108,16 @@ Use Python 3.12 or 3.13 for dependency compatibility.
    ```
 
    Open `http://127.0.0.1:5000`. Create a student account from the registration page; administrator accounts are created only by the secure seed process.
+
+## Updating an existing installation
+
+After pulling an update that changes the default detection phrases, run:
+
+```powershell
+python -m scripts.seed_data
+```
+
+Use the same local `.env` configuration. The seed process updates missing default keyword phrases in existing default rules, preserves other phrases already configured in those rules, and leaves user records and analysis history intact. Review administrator-managed rules in the dashboard after updating.
 
 ## Optional AI review configuration
 
@@ -131,7 +141,7 @@ python -m pytest -q
 
 The GitHub Actions workflow also compiles Python modules and runs pytest on pushes and pull requests to `main`.
 
-The suite covers rule scoring and thresholds, TXT/PDF extraction and invalid files, authentication/password hashing, role restrictions, student data isolation, analysis history, rule management, and report moderation. Performance should be measured on the demonstration machine and recorded in the assignment report; do not treat a single CI run as a universal performance guarantee.
+The suite covers rule scoring and thresholds, default seeded phrase regressions, TXT/PDF extraction and invalid files, authentication/password hashing, role restrictions, student data isolation, analysis history, rule management, and report moderation. Performance should be measured on the demonstration machine and recorded in the assignment report; do not treat a single CI run as a universal performance guarantee.
 
 ## Project structure
 
