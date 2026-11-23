@@ -19,7 +19,7 @@ def test_seed_creates_admin_and_default_rules_idempotently(app, monkeypatch):
         admin = db.session.query(User).filter_by(email="bootstrap@example.com").one()
         assert admin.role == "admin"
         assert admin.password_hash != "BootstrapPassword123"
-        assert first_rule_count == 7
+        assert first_rule_count == 10  # three fixture rules plus seven defaults
 
 
 def test_seed_refuses_to_elevate_existing_student(app, monkeypatch):
