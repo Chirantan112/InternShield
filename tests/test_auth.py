@@ -12,7 +12,7 @@ def test_public_registration_creates_student_with_hashed_password(client, app):
         "/register",
         data={
             "name": "New Student",
-            "email": "new@example.test",
+            "email": "new@example.com",
             "password": "StrongPassword123",
             "password_confirm": "StrongPassword123",
             "role": "admin",
@@ -22,7 +22,7 @@ def test_public_registration_creates_student_with_hashed_password(client, app):
     assert response.status_code == 200
     with app.app_context():
         user = db.session.scalar(
-            select(User).where(User.email == "new@example.test")
+            select(User).where(User.email == "new@example.com")
         )
         assert user is not None
         assert user.role == "student"
@@ -35,7 +35,7 @@ def test_registration_rejects_short_password(client):
         "/register",
         data={
             "name": "Short Password",
-            "email": "short@example.test",
+            "email": "short@example.com",
             "password": "short",
             "password_confirm": "short",
         },
@@ -49,7 +49,7 @@ def test_registration_rejects_mismatched_passwords(client):
         "/register",
         data={
             "name": "Mismatch",
-            "email": "mismatch@example.test",
+            "email": "mismatch@example.com",
             "password": "StrongPassword123",
             "password_confirm": "DifferentPassword123",
         },
@@ -63,7 +63,7 @@ def test_login_rejects_wrong_password(client):
         "/register",
         data={
             "name": "Login Student",
-            "email": "login@example.test",
+            "email": "login@example.com",
             "password": "StrongPassword123",
             "password_confirm": "StrongPassword123",
         },
@@ -71,7 +71,7 @@ def test_login_rejects_wrong_password(client):
     client.post("/logout")
     response = client.post(
         "/login",
-        data={"email": "login@example.test", "password": "incorrect"},
+        data={"email": "login@example.com", "password": "incorrect"},
     )
     assert response.status_code == 200
     assert b"Invalid email or password" in response.data
