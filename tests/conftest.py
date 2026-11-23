@@ -52,7 +52,7 @@ def app(tmp_path):
         db.session.add(
             User(
                 name="Test Admin",
-                email="admin@example.test",
+                email="admin@example.com",
                 password_hash=generate_password_hash("AdminPassword123"),
                 role="admin",
                 is_active=True,
@@ -76,7 +76,7 @@ def student(client):
         "/register",
         data={
             "name": "Test Student",
-            "email": "student@example.test",
+            "email": "student@example.com",
             "password": "StudentPassword123",
             "password_confirm": "StudentPassword123",
         },
@@ -91,7 +91,7 @@ def admin_client(app):
     client = app.test_client()
     response = client.post(
         "/login",
-        data={"email": "admin@example.test", "password": "AdminPassword123"},
+        data={"email": "admin@example.com", "password": "AdminPassword123"},
         follow_redirects=True,
     )
     assert response.status_code == 200
