@@ -111,3 +111,16 @@ def test_large_offer_text_is_processed_within_three_seconds():
     elapsed = perf_counter() - started
     assert result["score"] == 30
     assert elapsed < 3.0
+
+
+def test_formatting_regex_detects_repeated_punctuation_and_caps():
+    formatting_rule = rule(
+        "Formatting",
+        r"(?:[!?.,]){3,}|\\b[A-Z]{8,}\\b",
+        5,
+        match_type="regex",
+    )
+    repeated = analyze_offer("APPLY NOW!!!", [formatting_rule])
+    capitalized = analyze_offer("INTERNSHIP OPPORTUNITY", [formatting_rule])
+    assert repeated["score"] == 5
+    assert capitalized["score"] == 5
