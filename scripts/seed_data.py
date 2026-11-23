@@ -1,0 +1,128 @@
+"""Idempotently create an administrator and the default detection rules.
+
+Set ADMIN_EMAIL, ADMIN_PASSWORD, and ADMIN_NAME in the local environment
+before running: flask --app run.py seed-data
+No default credentials are embedded in the repository.
+"""
+
+import os
+import sys
+
+from werkzeug.security import generate_password_hash
+
+from internshield import create_app
+from internshield.extensions import db
+from internshield.models import DetectionRule, User
+
+
+DEFAULT_RULES = [
+    {
+        "name": "Upfront fees or deposits",
+        "description": "The offer appears to request registration, processing, training, or security fees before employment.",
+        "pattern": "registration fee, processing fee, security deposit, application fee, pay to apply, payment required, refundable deposit, training fee",
+        "points": 30,
+    },
+    {
+        "name": "Sensitive personal or financial information",
+        "description": "The message asks for highly sensitive identity, banking, card, password, or one-time-password details.",
+        "pattern": "aadhaar, aadhar, pan card, bank account, account number, otp, one time password, password, debit card, credit card, cvv",
+        "points": 20,
+    },
+    {
+        "name": "Free email sender",
+        "description": "The sender appears to use a consumer email provider rather than a verifiable company domain. This alone does not prove fraud.",
+        "pattern": "gmail.com, yahoo.com, outlook.com, hotmail.com",
+        "points": 15,
+    },
+    {
+        "name": "Urgency or pressure tactics",
+        "description": "The offer uses urgency or scarcity language that may pressure applicants into acting without verification.",
+        "pattern": "within 24 hours, immediately, last chance, limited seats, act now, urgent response, today only",
+        "points": 15,
+    },
+    {
+        "name": "Unverifiable company presence",
+        "description": "The offer suggests contact is restricted to informal channels or that no official company website is available.",
+        "pattern": "no official website, contact only on whatsapp, whatsapp only, website under maintenance, no company address",
+        "points": 15,
+    },
+    {
+        "name": "Unrealistic employment promises",
+        "description": "The offer contains unusually strong guarantees or compensation promises that should be independently verified.",
+        "pattern": "guaranteed job, 100% placement, guaranteed placement, earn lakhs without work, no interview required",
+        "points": 15,
+    },
+    {
+        "name": "Suspicious formatting or language",
+        "description": "Repeated punctuation or common high-pressure wording may indicate an unprofessional message; review context carefully.",
+        "pattern": "!!!, $$$, dear candidate urgently",
+        "points": 5,
+    },
+]
+
+
+def required_env(name: str) -> str:
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise RuntimeError(f"{name} must be set before seeding.")
+    return value
+
+
+def seed() -> None:
+    admin_email = required_env("ADMIN_EMAIL").lower()
+    admin_password = required_env("ADMIN_PASSWORD")
+    admin_name = os.getenv("ADMIN_NAME", "InternShield Administrator").strip()
+    if len(admin_password) < 10:
+        raise RuntimeError("ADMIN_PASSWORD must contain at least 10 characters.")
+
+    existing_admin = db.session.query(User).filter_by(email=admin_email).one_or_none()
+    if existing_admin is None:
+        db.session.add(
+            User(
+                name=admin_name[:100],
+                email=admin_email,
+                password_hash=generate_password_hash(admin_password),
+                role="admin",
+                is_active=True,
+            )
+        )
+        print(f"Created administrator account for {admin_email}.")
+    elif existing_admin.role != "admin":
+        raise RuntimeError(
+            "The configured ADMIN_EMAIL belongs to a non-admin account; "
+            "refusing to silently elevate it."
+        )
+    else:
+        print(f"Administrator account {admin_email} already exists; left unchanged.")
+
+    added = 0
+    for item in DEFAULT_RULES:
+        existing = db.session.query(DetectionRule).filter_by(name=item["name"]).one_or_none()
+        if existing is None:
+            db.session.add(
+                DetectionRule(
+                    **item,
+                    match_type="keyword",
+                    is_active=True,
+                )
+            )
+            added += 1
+    db.session.commit()
+    print(f"Seeded {added} default detection rule(s).")
+
+
+def main() -> None:
+    app = create_app()
+    with app.app_context():
+        from internshield import models  # noqa: F401
+
+        db.create_all()
+        seed()
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except (RuntimeError, ValueError) as exc:
+        print(f"Seed failed: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
