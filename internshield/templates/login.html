@@ -22,7 +22,7 @@
       <div class="card-body">
         <div class="auth-orb"><i class="bi bi-shield-lock-fill"></i></div>
         <p class="text-primary text-uppercase small fw-bold mb-2">Welcome back</p>
-        <h1 class="h3 mb-2">Sign in to your workspace</h1>
+        <h1 class="h3 mb-2">Log in to InternShield</h1>
         <p class="text-secondary mb-4">Continue reviewing opportunities with confidence.</p>
         <form method="post" action="{{ url_for('auth.login') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
