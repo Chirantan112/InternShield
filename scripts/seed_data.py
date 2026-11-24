@@ -19,6 +19,10 @@ from internshield.extensions import db
 from internshield.models import DetectionRule, User
 
 
+# Previous releases treated any single long uppercase word as suspicious.
+# Only migrate that exact built-in expression; preserve administrator edits.
+LEGACY_FORMATTING_PATTERN = r"(?:[!?.,]){3,}|\b[A-Z]{8,}\b"
+
 DEFAULT_RULES = [
     {
         "name": "Upfront fees or deposits",
@@ -58,8 +62,8 @@ DEFAULT_RULES = [
     },
     {
         "name": "Suspicious formatting or language",
-        "description": "Repeated punctuation or long all-capital words may indicate unprofessional formatting; review context carefully.",
-        "pattern": r"(?:[!?.,]){3,}|\b[A-Z]{8,}\b",
+        "description": "Repeated punctuation such as three or more consecutive marks may indicate unprofessional formatting; ordinary uppercase headings are not penalized.",
+        "pattern": r"(?:[!?.,]){3,}",
         "match_type": "regex",
         "points": 5,
     },
@@ -139,9 +143,17 @@ def seed() -> None:
             if merged_pattern != existing.pattern:
                 existing.pattern = merged_pattern
                 updated += 1
+        elif (
+            item.get("match_type") == "regex"
+            and existing.match_type == "regex"
+            and existing.pattern == LEGACY_FORMATTING_PATTERN
+        ):
+            # Update only the exact old built-in regex; preserve custom admin rules.
+            existing.pattern = item["pattern"]
+            updated += 1
 
     db.session.commit()
-    print(f"Seeded {added} new default rule(s); updated {updated} existing keyword rule(s).")
+    print(f"Seeded {added} new default rule(s); updated {updated} existing rule(s).")
 
 
 def main() -> None:
