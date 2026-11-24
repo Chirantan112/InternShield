@@ -1,11 +1,56 @@
 {% extends "base.html" %}
 {% block title %}Analysis result · InternShield{% endblock %}
 {% block content %}
-<div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4"><div><p class="text-primary fw-semibold text-uppercase small mb-1">Analysis complete</p><h1 class="h2 mb-1">Offer risk assessment</h1><p class="text-secondary mb-0">Completed in {{ duration_ms }} ms · {{ check.created_at.strftime('%d %b %Y, %H:%M') }}</p></div><a class="btn btn-primary align-self-md-center" href="{{ url_for('student.analyze') }}">Analyze another offer</a></div>
-<div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><div class="row align-items-center g-3"><div class="col-md-4"><p class="text-secondary mb-1">Risk score</p><p class="display-3 fw-bold mb-0">{{ check.score }}<span class="fs-4 text-secondary">/100</span></p></div><div class="col-md-8"><span class="risk-pill risk-{{ check.risk_level }} fs-6">{{ check.risk_level|title }} risk</span><p class="mt-3 mb-0">This score is based on the warning signs detected in the submitted offer. It is a preliminary indicator, not proof of fraud.</p></div></div></div></div>
-<div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><h2 class="h5">Detected warning signs</h2>{% if check.flags %}<div class="list-group list-group-flush">{% for flag in check.flags %}<div class="list-group-item px-0"><div class="d-flex justify-content-between gap-3"><strong>{{ flag.rule_name }}</strong><span class="text-danger fw-semibold">+{{ flag.points }} points</span></div><p class="text-secondary mb-0">{{ flag.explanation }}</p></div>{% endfor %}</div>{% else %}<p class="text-success mb-0">No configured warning signs were detected. Still verify the employer independently.</p>{% endif %}</div></div>
-{% if result.contextual_warnings %}<div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><h2 class="h5">Contextual verification prompts</h2><p class="text-secondary small">These language patterns suggest questions to check. They are separate from the numeric score and do not establish fraud.</p><div class="list-group list-group-flush">{% for warning in result.contextual_warnings %}<div class="list-group-item px-0"><strong>{{ warning.title }}</strong><p class="text-secondary mb-0">{{ warning.explanation }}</p></div>{% endfor %}</div></div></div>{% endif %}
-{% if ai_review %}<div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><h2 class="h5">Optional AI context review</h2><p>{{ ai_review.summary }}</p>{% if ai_review.additional_concerns %}<h3 class="h6">Additional concerns</h3><ul>{% for item in ai_review.additional_concerns %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}{% if ai_review.verification_steps %}<h3 class="h6">Suggested verification steps</h3><ul class="mb-0">{% for item in ai_review.verification_steps %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}<p class="small text-secondary mt-3 mb-0">AI output may be inaccurate. It is supplementary and does not alter the deterministic score above.</p></div></div>{% endif %}
-<div class="card border-0 shadow-sm mb-4"><div class="card-body p-4"><h2 class="h5">Submitted offer text</h2><pre class="offer-preview mb-0">{{ check.input_text }}</pre></div></div>
-<p class="small text-secondary">{{ result.disclaimer }}</p><a href="{{ url_for('student.history') }}">View your analysis history</a>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+  <div><div class="section-label mb-2"><i class="bi bi-clipboard2-pulse"></i> Analysis complete</div><h1 class="h2 mb-1">Your offer assessment</h1><p class="text-secondary mb-0">Completed in {{ duration_ms }} ms · {{ check.created_at.strftime('%d %b %Y, %H:%M') }}</p></div>
+  <a class="btn btn-primary" href="{{ url_for('student.analyze') }}"><i class="bi bi-plus-lg me-1"></i>Analyze another offer</a>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <div class="score-panel h-100">
+      <div class="d-flex justify-content-between align-items-start"><div><div class="score-sub text-uppercase fw-bold mb-2" style="letter-spacing:.12em">Overall risk score</div><div class="score-number">{{ check.score }}<span class="fs-5 fw-semibold">/100</span></div></div><i class="bi bi-shield-exclamation fs-2" style="color:#68dcd1"></i></div>
+      <div class="score-track"><span style="width: {{ check.score }}%"></span></div>
+      <div class="d-flex justify-content-between align-items-center mt-3"><span class="score-sub">Based on configured indicators</span><span class="risk-pill risk-{{ check.risk_level }}">{{ check.risk_level|title }} risk</span></div>
+      <p class="score-sub mt-3 mb-0">This is a preliminary indicator, not proof of fraud or a guarantee that the offer is safe.</p>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card h-100 border-0"><div class="card-body p-4">
+      <div class="section-label mb-3"><i class="bi bi-clipboard-check"></i> How to read this result</div>
+      <h2 class="h5">Look at the evidence, not just the number.</h2>
+      <p class="text-secondary">Each detected warning sign below explains which configured rule matched and how many points it contributed. Contextual prompts are shown separately and do not automatically add to the score.</p>
+      <div class="d-flex flex-wrap gap-2 mt-3"><span class="badge text-bg-light border text-dark">0–30 · Low</span><span class="badge text-bg-light border text-dark">31–60 · Medium</span><span class="badge text-bg-light border text-dark">61–100 · High</span></div>
+    </div></div>
+  </div>
+</div>
+<div class="card border-0 mb-4">
+  <div class="card-body p-4">
+    <div class="section-label mb-2"><i class="bi bi-exclamation-diamond"></i> Detected warning signs</div>
+    <h2 class="h5 mb-3">What the rules picked up</h2>
+    {% if check.flags %}
+      <div class="list-group list-group-flush">{% for flag in check.flags %}
+        <div class="list-group-item px-0"><div class="d-flex justify-content-between align-items-start gap-3"><strong>{{ flag.rule_name }}</strong><span class="badge text-bg-light border text-danger">+{{ flag.points }} pts</span></div><p class="text-secondary mb-0 mt-1">{{ flag.explanation }}</p></div>
+      {% endfor %}</div>
+    {% else %}<div class="p-3 rounded-3" style="background:#e8f7f0;color:#176b4c"><i class="bi bi-check-circle-fill me-2"></i>No configured warning signs were detected. Still verify the employer independently.</div>{% endif %}
+  </div>
+</div>
+{% if result.contextual_warnings %}
+<div class="card border-0 mb-4">
+  <div class="card-body p-4">
+    <div class="section-label mb-2"><i class="bi bi-chat-square-text"></i> Contextual review</div>
+    <h2 class="h5 mb-1">Questions worth asking</h2><p class="text-secondary small">These prompts highlight language that may need clarification. They are separate from the numeric score and do not establish fraud.</p>
+    <div class="row g-3">{% for warning in result.contextual_warnings %}<div class="col-md-6"><div class="p-3 h-100 rounded-3" style="background:#f5f8fc;border:1px solid #e7edf5"><strong><i class="bi bi-arrow-return-right text-primary me-1"></i>{{ warning.title }}</strong><p class="text-secondary mb-0 mt-2 small">{{ warning.explanation }}</p></div></div>{% endfor %}</div>
+  </div>
+</div>
+{% endif %}
+{% if ai_review %}
+<div class="card border-0 mb-4"><div class="card-body p-4">
+  <div class="section-label mb-2"><i class="bi bi-stars"></i> Supplementary AI review</div><h2 class="h5">Additional context</h2><p>{{ ai_review.summary }}</p>
+  {% if ai_review.additional_concerns %}<h3 class="h6 mt-3">Additional concerns</h3><ul>{% for item in ai_review.additional_concerns %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  {% if ai_review.verification_steps %}<h3 class="h6 mt-3">Suggested verification steps</h3><ul class="mb-0">{% for item in ai_review.verification_steps %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+  <p class="small text-secondary mt-3 mb-0">AI output may be inaccurate. It is supplementary and does not alter the deterministic score above.</p>
+</div></div>
+{% endif %}
+<div class="card border-0 mb-3"><div class="card-body p-4"><div class="section-label mb-2"><i class="bi bi-file-text"></i> Submitted content</div><h2 class="h5 mb-3">Offer text reviewed</h2><pre class="offer-preview mb-0">{{ check.input_text }}</pre></div></div>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2"><p class="small text-secondary mb-0">{{ result.disclaimer }}</p><a href="{{ url_for('student.history') }}">View analysis history <i class="bi bi-arrow-right"></i></a></div>
 {% endblock %}
