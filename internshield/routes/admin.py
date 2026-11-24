@@ -119,20 +119,28 @@ def edit_rule(rule_id: int):
                 DetectionRule.name == name, DetectionRule.id != rule.id
             )
         )
+        invalid_regex = False
+        if rule.match_type == "regex" and pattern:
+            try:
+                re.compile(pattern, flags=re.IGNORECASE)
+            except re.error:
+                invalid_regex = True
+
         if not name or not description or not pattern:
             flash("All rule fields are required.", "danger")
         elif len(name) > 120 or len(description) > 500 or len(pattern) > 1000:
             flash("One or more fields exceed the allowed length.", "danger")
         elif not 0 <= points <= 100 or duplicate:
             flash("Check the points value and ensure the rule name is unique.", "danger")
+        elif invalid_regex:
+            flash("Enter a valid regular expression for this rule.", "danger")
         else:
             rule.name = name
             rule.description = description
             rule.pattern = pattern
             rule.points = points
-            # Existing regex rules are retained as-is; edited rules become
-            # keyword rules to keep the admin UI from introducing regex risks.
-            rule.match_type = "keyword"
+            # Preserve the existing match type. Regex rules are validated above;
+            # new rules remain keyword-only to avoid exposing arbitrary regexes.
             db.session.commit()
             flash("Detection rule updated.", "success")
             return redirect(url_for("admin.rules"))
