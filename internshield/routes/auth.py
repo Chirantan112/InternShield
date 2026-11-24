@@ -6,7 +6,7 @@ from flask_login import current_user, login_user, logout_user
 from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from ..extensions import db
+from ..extensions import db, limiter
 from ..models import User
 
 
@@ -74,8 +74,9 @@ def register():
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute", methods=["POST"])
 def login():
-    """Authenticate an existing student or administrator."""
+    """Authenticate an existing student or administrator with throttling."""
     if current_user.is_authenticated:
         destination = "admin.dashboard" if current_user.is_admin else "student.dashboard"
         return redirect(url_for(destination))
