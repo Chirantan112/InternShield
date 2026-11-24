@@ -186,3 +186,11 @@ InternShield/
 ## Assignment documentation
 
 The final submission report should include the title, problem statement, objectives, stakeholders, functional and non-functional requirements, implementation screenshots, source-code discussion, test cases with actual results, and conclusion. Keep the report within the 10-page limit and cite external sources in the text. Capture screenshots and record measured timings from the actual local run; do not invent demonstration evidence or test results.
+
+
+## Security notes
+
+- Login POST requests are limited to five attempts per minute per client IP.
+- The default limiter store is in-memory for local/single-process use. Multi-worker production deployments should set `RATELIMIT_STORAGE_URI` to a shared Redis-compatible store so limits are consistent across workers.
+- Browser requests receive an HTML not-found page; clients explicitly requesting JSON receive a JSON error response.
+- Saved analysis detail pages are restricted to the owning student.
