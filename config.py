@@ -11,6 +11,18 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 
+def _database_uri() -> str:
+    """Normalize hosted PostgreSQL URLs for the psycopg 3 SQLAlchemy driver."""
+    value = os.getenv("DATABASE_URL")
+    if not value:
+        return f"sqlite:///{(PROJECT_ROOT / 'instance' / 'internshield.sqlite3').as_posix()}"
+    if value.startswith("postgres://"):
+        return value.replace("postgres://", "postgresql+psycopg://", 1)
+    if value.startswith("postgresql://"):
+        return value.replace("postgresql://", "postgresql+psycopg://", 1)
+    return value
+
+
 def _env_bool(name: str, default: bool = False) -> bool:
     """Read a boolean environment variable without treating 'false' as true."""
     value = os.getenv(name)
@@ -23,11 +35,9 @@ class Config:
     """Base configuration shared by local and deployed environments."""
 
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-this-secret")
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL",
-        f"sqlite:///{(PROJECT_ROOT / 'instance' / 'internshield.sqlite3').as_posix()}",
-    )
+    SQLALCHEMY_DATABASE_URI = _database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
 
     # Uploads are stored outside the public static directory.
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", str(5 * 1024 * 1024)))
