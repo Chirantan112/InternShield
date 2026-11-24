@@ -95,6 +95,25 @@ Public registration always creates a student account. Administrator accounts are
 
 The optional AI review is disabled by default, requires explicit consent for each submission, uses a bounded text excerpt, and requires HTTPS for remote providers. Its output is supplementary and cannot change the deterministic score.
 
+### 5.6 Source code
+
+The application source code is maintained in the GitHub repository: https://github.com/Chirantan112/InternShield. The main implementation is organised into the following modules:
+
+| Source file / directory | Responsibility |
+|---|---|
+| `run.py` and `internshield/__init__.py` | Application entry point, Flask application factory, extension setup, and error handling |
+| `internshield/routes/auth.py` | Student registration, login, logout, and login-attempt throttling |
+| `internshield/routes/student.py` | Offer analysis, saved-result history, and student reports |
+| `internshield/routes/admin.py` | Detection-rule administration and report moderation |
+| `internshield/services/rule_engine.py` | Deterministic risk scoring and contextual verification prompts |
+| `internshield/services/file_parser.py` | Safe in-memory TXT/PDF text extraction |
+| `internshield/services/ai_review.py` | Optional consent-based AI review |
+| `internshield/models.py` | SQLAlchemy database models |
+| `internshield/templates/` and `internshield/static/` | HTML templates, styling, and browser-side interactions |
+| `tests/` | Automated unit and workflow tests |
+
+The repository contains the complete source files; the table identifies where each major requirement is implemented. No secrets, passwords, or API keys are included in the source repository.
+
 ### 5.5 Implementation screenshots
 
 Insert actual screenshots captured from the running application:
