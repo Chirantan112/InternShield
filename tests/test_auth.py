@@ -1,7 +1,7 @@
 """Authentication and account-creation tests."""
 
 from sqlalchemy import select
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from internshield.extensions import db
 from internshield.models import User
@@ -21,7 +21,7 @@ def test_public_registration_creates_student_and_logs_in(client, app):
     )
     assert response.status_code == 200
     assert b"Your student account has been created" in response.data
-    assert b"Student dashboard" in response.data or b"Dashboard" in response.data
+    assert b"Hello, New Student." in response.data
     with app.app_context():
         user = db.session.scalar(select(User).where(User.email == "new@example.com"))
         assert user is not None
@@ -70,7 +70,7 @@ def test_legacy_unverified_account_can_log_in(client, app):
         user = User(
             name="Legacy Student",
             email="legacy@example.com",
-            password_hash=__import__("werkzeug.security", fromlist=["generate_password_hash"]).generate_password_hash("StrongPassword123"),
+            password_hash=generate_password_hash("StrongPassword123"),
             role="student",
             email_verified=False,
             email_verification_otp_hash="old-otp-hash",
