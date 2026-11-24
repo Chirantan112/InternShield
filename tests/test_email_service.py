@@ -9,6 +9,7 @@ from internshield.services import email as email_service
 
 def test_gmail_smtp_uses_starttls_and_sends_otp(monkeypatch):
     smtp = MagicMock()
+    smtp.__enter__.return_value = smtp
     monkeypatch.setenv("MAIL_SERVER", "smtp.gmail.com")
     monkeypatch.setenv("MAIL_PORT", "587")
     monkeypatch.setenv("MAIL_USERNAME", "sender@gmail.com")
@@ -42,6 +43,7 @@ def test_smtp_failure_does_not_leak_provider_details(monkeypatch):
     monkeypatch.setenv("MAIL_USERNAME", "sender@gmail.com")
     monkeypatch.setenv("MAIL_PASSWORD", "secret-app-password")
     smtp = MagicMock()
+    smtp.__enter__.return_value = smtp
     smtp.login.side_effect = email_service.smtplib.SMTPAuthenticationError(535, b"bad credentials")
     monkeypatch.setattr(email_service.smtplib, "SMTP", MagicMock(return_value=smtp))
 
