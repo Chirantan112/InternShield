@@ -122,3 +122,137 @@ def test_unknown_json_endpoint_can_request_json_404(client):
     assert response.status_code == 404
     assert response.is_json
     assert "error" in response.get_json()
+
+
+
+def test_registration_requires_email_otp_before_login(client, app, monkeypatch):
+    import internshield.routes.auth as auth_routes
+
+    app.config["EMAIL_VERIFICATION_REQUIRED"] = True
+    sent = []
+    monkeypatch.setattr(
+        auth_routes, "send_verification_email",
+        lambda recipient, otp: sent.append((recipient, otp)),
+    )
+
+    response = client.post(
+        "/register",
+        data={
+            "name": "Unverified Student",
+            "email": "verify@example.com",
+            "password": "StrongPassword123",
+            "password_confirm": "StrongPassword123",
+        },
+    )
+    assert response.status_code == 302
+    assert "/verify-email" in response.headers["Location"]
+    assert sent and sent[0][0] == "verify@example.com"
+
+    with app.app_context():
+        user = db.session.scalar(
+            select(User).where(User.email == "verify@example.com")
+        )
+        assert user is not None
+        assert user.email_verified is False
+        assert user.email_verification_otp_hash != sent[0][1]
+
+    login_response = client.post(
+        "/login",
+        data={"email": "verify@example.com", "password": "StrongPassword123"},
+    )
+    assert login_response.status_code == 302
+    assert "/verify-email" in login_response.headers["Location"]
+
+    verified = client.post(
+        "/verify-email",
+        data={"email": "verify@example.com", "otp": sent[0][1]},
+        follow_redirects=True,
+    )
+    assert verified.status_code == 200
+    assert b"Email verified" in verified.data
+
+    with app.app_context():
+        user = db.session.scalar(
+            select(User).where(User.email == "verify@example.com")
+        )
+        assert user.email_verified is True
+        assert user.email_verification_otp_hash is None
+
+
+def test_email_otp_rejects_incorrect_code_and_locks_after_five_attempts(
+    client, app, monkeypatch
+):
+    import internshield.routes.auth as auth_routes
+
+    app.config["EMAIL_VERIFICATION_REQUIRED"] = True
+    monkeypatch.setattr(
+        auth_routes, "send_verification_email", lambda recipient, otp: None
+    )
+    client.post(
+        "/register",
+        data={
+            "name": "OTP Attempts",
+            "email": "attempts@example.com",
+            "password": "StrongPassword123",
+            "password_confirm": "StrongPassword123",
+        },
+    )
+
+    for _ in range(5):
+        response = client.post(
+            "/verify-email",
+            data={"email": "attempts@example.com", "otp": "123456"},
+        )
+        assert response.status_code == 200
+        assert b"Incorrect verification code" in response.data
+
+    blocked = client.post(
+        "/verify-email",
+        data={"email": "attempts@example.com", "otp": "123456"},
+    )
+    assert b"Too many incorrect codes" in blocked.data
+
+
+def test_resend_verification_obeys_cooldown(client, app, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    import internshield.routes.auth as auth_routes
+
+    app.config["EMAIL_VERIFICATION_REQUIRED"] = True
+    sent = []
+    monkeypatch.setattr(
+        auth_routes, "send_verification_email",
+        lambda recipient, otp: sent.append(otp),
+    )
+    client.post(
+        "/register",
+        data={
+            "name": "Resend Student",
+            "email": "resend@example.com",
+            "password": "StrongPassword123",
+            "password_confirm": "StrongPassword123",
+        },
+    )
+    assert len(sent) == 1
+
+    cooldown = client.post(
+        "/resend-verification",
+        data={"email": "resend@example.com"},
+        follow_redirects=True,
+    )
+    assert b"Please wait a minute" in cooldown.data
+    assert len(sent) == 1
+
+    with app.app_context():
+        user = db.session.scalar(
+            select(User).where(User.email == "resend@example.com")
+        )
+        user.email_verification_sent_at = datetime.now(timezone.utc) - timedelta(seconds=61)
+        db.session.commit()
+
+    resent = client.post(
+        "/resend-verification",
+        data={"email": "resend@example.com"},
+        follow_redirects=True,
+    )
+    assert b"new verification code has been sent" in resent.data
+    assert len(sent) == 2

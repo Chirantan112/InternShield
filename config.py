@@ -71,6 +71,7 @@ class Config:
     # Basic application limits.
     MAX_ANALYSIS_CHARACTERS = int(os.getenv("MAX_ANALYSIS_CHARACTERS", "50000"))
     MIN_PASSWORD_LENGTH = int(os.getenv("MIN_PASSWORD_LENGTH", "10"))
+    EMAIL_VERIFICATION_REQUIRED = _env_bool("EMAIL_VERIFICATION_REQUIRED", True)
 
 
 class DevelopmentConfig(Config):
@@ -79,6 +80,7 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
+    EMAIL_VERIFICATION_REQUIRED = False
     WTF_CSRF_ENABLED = False
     RATELIMIT_STORAGE_URI = "memory://"
     SQLALCHEMY_DATABASE_URI = "sqlite://"

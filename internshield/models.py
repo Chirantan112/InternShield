@@ -28,6 +28,13 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="student")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # Existing accounts remain verified during the additive schema migration;
+    # public registration explicitly creates new accounts as unverified.
+    email_verified = db.Column(db.Boolean, nullable=False, default=True, server_default="true")
+    email_verification_otp_hash = db.Column(db.String(255))
+    email_verification_expires_at = db.Column(db.DateTime(timezone=True))
+    email_verification_sent_at = db.Column(db.DateTime(timezone=True))
+    email_verification_attempts = db.Column(db.Integer, nullable=False, default=0, server_default="0")
     created_at = db.Column(db.DateTime(timezone=True), nullable=False, default=utc_now)
 
     checks = db.relationship(

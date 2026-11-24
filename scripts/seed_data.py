@@ -10,6 +10,7 @@ import re
 import sys
 
 from dotenv import load_dotenv
+from sqlalchemy import inspect, text
 from werkzeug.security import generate_password_hash
 
 load_dotenv()
@@ -125,6 +126,7 @@ def seed() -> None:
                 password_hash=generate_password_hash(admin_password),
                 role="admin",
                 is_active=True,
+                email_verified=True,
             )
         )
         print(f"Created administrator account for {admin_email}.")
@@ -173,12 +175,35 @@ def seed() -> None:
     print(f"Seeded {added} new default rule(s); updated {updated} existing rule(s).")
 
 
+def migrate_email_verification_columns() -> None:
+    """Add verification columns without invalidating existing user accounts."""
+    inspector = inspect(db.engine)
+    if "users" not in inspector.get_table_names():
+        return
+
+    existing = {column["name"] for column in inspector.get_columns("users")}
+    additions = {
+        "email_verified": "BOOLEAN NOT NULL DEFAULT TRUE",
+        "email_verification_otp_hash": "VARCHAR(255)",
+        "email_verification_expires_at": "TIMESTAMP",
+        "email_verification_sent_at": "TIMESTAMP",
+        "email_verification_attempts": "INTEGER NOT NULL DEFAULT 0",
+    }
+    with db.engine.begin() as connection:
+        for column, definition in additions.items():
+            if column not in existing:
+                connection.execute(
+                    text(f"ALTER TABLE users ADD COLUMN {column} {definition}")
+                )
+
+
 def main() -> None:
     app = create_app()
     with app.app_context():
         from internshield import models  # noqa: F401
 
         db.create_all()
+        migrate_email_verification_columns()
         seed()
 
 

@@ -9,7 +9,7 @@ InternShield is a student-focused Flask web application that checks internship a
 ## Features
 
 ### Student
-- Student registration, login, and logout; passwords are hashed.
+- Student registration, email OTP verification, login, and logout; passwords and OTPs are hashed.
 - Analyze pasted offer text or upload text-based TXT/PDF files (5 MB maximum; 50,000 characters maximum by default).
 - See Low / Medium / High risk, a capped 0–100 score, and explanations for each matched rule.
 - View and delete only your own analysis history.
@@ -43,6 +43,17 @@ Each rule contributes at most once per analysis; the total is capped at 100.
 | 61–100 | High |
 
 The score is intentionally explainable and configurable. The current implementation uses literal keyword/phrase matching for administrator-managed rules. A separate contextual review layer highlights generic combinations (such as training alongside an internship, discounts/referrals, forms, payment wording, placement-assistance claims, and affiliation claims) and suggests verification questions. These prompts do not add score points and do not establish fraud. The system does not verify company registrations, sender authenticity, or live website reputation. Mentions of well-known companies, universities, or certifications are not proof that an affiliation is genuine; applicants must verify those claims independently. Default urgency phrases include both singular and plural scarcity wording (for example, “scholarship slot left” and “slots left”), and the default keyword update is applied safely by rerunning the seeder.
+
+### Email verification
+
+New student accounts must verify ownership of their email address before they can sign in. InternShield sends a six-digit OTP through the Resend transactional email API. Codes expire after 10 minutes, are stored only as password hashes, allow at most five attempts, and can be resent no more than once per minute per account. Registration, verification, and resend endpoints also have IP-based rate limits. Existing accounts are preserved as verified when the additive database migration runs.
+
+For local or hosted email delivery, create a free Resend account, verify a sender domain/address as required by Resend, and configure:
+- `RESEND_API_KEY` — API key stored only as an environment secret.
+- `MAIL_FROM` — sender identity approved by Resend, e.g. `InternShield <verify@yourdomain.com>`.
+- `EMAIL_VERIFICATION_REQUIRED=true` — enabled by default.
+
+Resend's published free tier currently includes 3,000 transactional emails per month with a 100-email daily cap. The sender domain must be verified before sending to arbitrary recipients; a provider account/API key alone does not guarantee deliverability. See [Resend pricing](https://resend.com/pricing).
 
 ## Technology
 
@@ -90,6 +101,7 @@ Use Python 3.12 or 3.13 for dependency compatibility.
    - `ADMIN_EMAIL`
    - `ADMIN_PASSWORD` (at least 10 characters)
    - `ADMIN_NAME` (optional)
+   - `RESEND_API_KEY` and `MAIL_FROM` after setting up a verified sender in Resend, so new users can receive OTP emails.
 
    These credentials are read from your local environment and are never stored in the source code. Do not commit `.env`.
 
@@ -174,7 +186,8 @@ InternShield/
 ## Security and limitations
 
 - Public registration always creates a student; admin creation is environment-seeded.
-- Passwords are stored as Werkzeug password hashes, not plaintext.
+- Passwords and email OTPs are stored as Werkzeug password hashes, not plaintext.
+- New student accounts cannot sign in until their email OTP is verified; existing accounts remain verified during the schema migration.
 - CSRF protection is enabled for state-changing forms.
 - Student history queries and deletion are scoped to the authenticated user.
 - Upload parsing is in-memory, extension-checked, size-limited, and rejects unsupported/corrupt documents.
@@ -194,3 +207,5 @@ The final submission report should include the title, problem statement, objecti
 - The default limiter store is in-memory for local/single-process use. Multi-worker production deployments should set `RATELIMIT_STORAGE_URI` to a shared Redis-compatible store so limits are consistent across workers.
 - Browser requests receive an HTML not-found page; clients explicitly requesting JSON receive a JSON error response.
 - Saved analysis detail pages are restricted to the owning student.
+
+- Email verification is delivered through Resend; configure a verified sender and keep the API key in environment secrets. The free tier has provider-enforced sending limits.
