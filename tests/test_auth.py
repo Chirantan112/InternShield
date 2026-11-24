@@ -88,3 +88,37 @@ def test_logout_ends_session(client, student):
     assert response.status_code == 200
     assert b"You have been logged out" in response.data
     assert b"Log in to InternShield" in response.data
+
+
+
+def test_login_is_rate_limited_after_five_failed_attempts(client):
+    for _ in range(5):
+        response = client.post(
+            "/login",
+            data={"email": "nobody@example.com", "password": "incorrect"},
+        )
+        assert response.status_code == 200
+
+    blocked = client.post(
+        "/login",
+        data={"email": "nobody@example.com", "password": "incorrect"},
+    )
+    assert blocked.status_code == 429
+    assert b"Too many login attempts" in blocked.data
+
+
+def test_unknown_browser_page_returns_html_not_json(client):
+    response = client.get("/this-page-does-not-exist", headers={"Accept": "text/html"})
+    assert response.status_code == 404
+    assert response.mimetype == "text/html"
+    assert b"Page not found" in response.data
+
+
+def test_unknown_json_endpoint_can_request_json_404(client):
+    response = client.get(
+        "/this-page-does-not-exist",
+        headers={"Accept": "application/json"},
+    )
+    assert response.status_code == 404
+    assert response.is_json
+    assert "error" in response.get_json()
