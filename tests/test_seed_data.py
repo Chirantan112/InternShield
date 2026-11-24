@@ -90,3 +90,10 @@ def test_seed_migrates_only_the_legacy_default_formatting_regex(app, monkeypatch
         assert saved_formatting.pattern == expected
         assert saved_formatting.match_type == "regex"
         assert saved_custom.pattern == r"\bCUSTOM\s+PATTERN\b"
+
+        saved_placement = db.session.query(DetectionRule).filter_by(
+            name="Unrealistic employment promises"
+        ).one()
+        assert "100% placement" not in saved_placement.pattern
+        assert "custom administrator phrase" in saved_placement.pattern
+        assert "guaranteed job" in saved_placement.pattern
