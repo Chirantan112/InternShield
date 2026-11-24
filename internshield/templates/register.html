@@ -23,7 +23,7 @@
         <div class="auth-orb"><i class="bi bi-person-plus-fill"></i></div>
         <p class="text-primary text-uppercase small fw-bold mb-2">Get started</p>
         <h1 class="h3 mb-2">Create your account</h1>
-        <p class="text-secondary mb-4">Verify your email address with a one-time code to activate your account. Your offer checks and history stay private.</p>
+        <p class="text-secondary mb-4">Sign up with your name, email, and password. You can start using InternShield right away.</p>
         <form method="post" action="{{ url_for('auth.register') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
