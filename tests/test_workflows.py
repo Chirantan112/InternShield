@@ -216,3 +216,114 @@ def test_ai_opt_in_does_not_block_rule_based_result_when_disabled(client, studen
         saved = db.session.query(AnalysisCheck).one()
         assert saved.score == 30
         assert saved.risk_level == "low"
+
+
+
+def test_editing_regex_rule_preserves_regex_match_type_and_behavior(admin_client, app):
+    with app.app_context():
+        from internshield.models import DetectionRule
+
+        regex_rule = DetectionRule(
+            name="Repeated punctuation",
+            description="Detects repeated punctuation.",
+            pattern=r"!{3,}",
+            match_type="regex",
+            points=5,
+            is_active=True,
+        )
+        db.session.add(regex_rule)
+        db.session.commit()
+        rule_id = regex_rule.id
+
+    response = admin_client.post(
+        f"/admin/rules/{rule_id}/edit",
+        data={
+            "name": "Repeated punctuation updated",
+            "description": "Updated explanation.",
+            "pattern": r"[!?]{3,}",
+            "points": "7",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    with app.app_context():
+        from internshield.models import DetectionRule
+        from internshield.services.rule_engine import analyze_offer
+
+        saved = db.session.get(DetectionRule, rule_id)
+        assert saved.match_type == "regex"
+        assert saved.pattern == r"[!?]{3,}"
+        assert analyze_offer("Apply now!!!", [saved])["score"] == 7
+
+
+def test_invalid_regex_edit_is_rejected_without_changing_saved_rule(admin_client, app):
+    with app.app_context():
+        from internshield.models import DetectionRule
+
+        regex_rule = DetectionRule(
+            name="Valid regex",
+            description="A valid regular expression.",
+            pattern=r"!{3,}",
+            match_type="regex",
+            points=5,
+            is_active=True,
+        )
+        db.session.add(regex_rule)
+        db.session.commit()
+        rule_id = regex_rule.id
+
+    response = admin_client.post(
+        f"/admin/rules/{rule_id}/edit",
+        data={
+            "name": "Valid regex",
+            "description": "A valid regular expression.",
+            "pattern": "[",
+            "points": "5",
+        },
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert b"valid regular expression" in response.data.lower()
+    with app.app_context():
+        from internshield.models import DetectionRule
+
+        saved = db.session.get(DetectionRule, rule_id)
+        assert saved.pattern == r"!{3,}"
+        assert saved.match_type == "regex"
+
+
+def test_student_can_reopen_own_saved_analysis_but_not_another_students(client, student, app):
+    client.post(
+        "/student/analyze",
+        data={"offer_text": "Pay a registration fee before joining."},
+    )
+    with app.app_context():
+        own = db.session.query(AnalysisCheck).one()
+        own_id = own.id
+        other = User(
+            name="Private Owner",
+            email="private-owner@example.test",
+            password_hash=generate_password_hash("OtherPassword123"),
+            role="student",
+        )
+        db.session.add(other)
+        db.session.flush()
+        private_check = AnalysisCheck(
+            user_id=other.id,
+            input_text="Another student's confidential offer text",
+            source_type="pasted_text",
+            score=0,
+            risk_level="low",
+        )
+        db.session.add(private_check)
+        db.session.commit()
+        private_id = private_check.id
+
+    own_response = client.get(f"/student/history/{own_id}")
+    assert own_response.status_code == 200
+    assert b"Pay a registration fee" in own_response.data
+    assert b"30" in own_response.data
+
+    private_response = client.get(f"/student/history/{private_id}")
+    assert private_response.status_code == 404
+    assert b"confidential offer text" not in private_response.data
