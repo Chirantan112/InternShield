@@ -113,7 +113,7 @@ def test_large_offer_text_is_processed_within_three_seconds():
     assert elapsed < 3.0
 
 
-def test_formatting_regex_detects_repeated_punctuation_and_caps():
+def test_formatting_regex_detects_repeated_punctuation_without_flagging_caps():
     formatting_rule = rule(
         "Formatting",
         r"(?:[!?.,]){3,}|\b[A-Z]{8,}\b",
