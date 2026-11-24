@@ -10,7 +10,7 @@ from ..extensions import db
 from ..models import AnalysisCheck, CheckFlag, DetectionRule, ScamReport
 from ..services.ai_review import AIReviewError, request_ai_review
 from ..services.file_parser import FileParseError, extract_offer_text
-from ..services.rule_engine import InvalidRulePattern, analyze_offer
+from ..services.rule_engine import InvalidRulePattern, analyze_offer, contextual_warnings
 from ..utils.decorators import role_required
 
 student_bp = Blueprint("student", __name__, url_prefix="/student")
@@ -121,6 +121,35 @@ def history():
         .order_by(AnalysisCheck.created_at.desc())
     ).all()
     return render_template("student/history.html", checks=checks)
+
+
+@student_bp.get("/history/<int:check_id>")
+@role_required("student")
+def view_history(check_id: int):
+    """Reopen a saved result without re-running today's detection rules."""
+    check = db.session.scalar(
+        select(AnalysisCheck).where(
+            AnalysisCheck.id == check_id,
+            AnalysisCheck.user_id == current_user.id,
+        )
+    )
+    if check is None:
+        abort(404)
+
+    result = {
+        "contextual_warnings": contextual_warnings(check.input_text),
+        "disclaimer": (
+            "This is the saved result from the original analysis. "
+            "It is a preliminary indicator, not proof of fraud."
+        ),
+    }
+    return render_template(
+        "student/result.html",
+        check=check,
+        result=result,
+        duration_ms=None,
+        ai_review=None,
+    )
 
 
 @student_bp.post("/history/<int:check_id>/delete")
