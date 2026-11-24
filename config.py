@@ -44,6 +44,11 @@ class Config:
     REMEMBER_COOKIE_SAMESITE = "Lax"
     WTF_CSRF_ENABLED = True
 
+    # Login throttling: use a shared Redis-compatible store in multi-worker
+    # production deployments; memory:// is suitable for local/single-process use.
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
+    RATELIMIT_HEADERS_ENABLED = True
+
     # Optional AI provider configuration. The rule engine must work when these
     # values are absent; an API key will be supplied through the local environment
     # later and must never be stored in source control.
@@ -65,6 +70,7 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     TESTING = True
     WTF_CSRF_ENABLED = False
+    RATELIMIT_STORAGE_URI = "memory://"
     SQLALCHEMY_DATABASE_URI = "sqlite://"
 
 
