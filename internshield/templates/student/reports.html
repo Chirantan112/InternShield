@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 {% block title %}My scam reports · InternShield{% endblock %}
 {% block content %}
-<div class="mb-4"><p class="text-primary fw-semibold text-uppercase small mb-1">Community safety</p><h1 class="h2 mb-0">Your submitted reports</h1></div>
-<div class="card border-0 shadow-sm"><div class="card-body p-4">{% if reports %}{% for report in reports %}<div class="border-bottom py-3"><div class="d-flex justify-content-between flex-wrap gap-2"><strong>{{ report.company_name }}</strong><span class="badge text-bg-{{ 'warning' if report.status == 'pending' else ('success' if report.status == 'approved' else 'secondary') }}">{{ report.status|title }}</span></div><p class="text-secondary small mb-1">{{ report.created_at.strftime('%d %b %Y, %H:%M') }}</p><p class="mb-0">{{ report.offer_details }}</p>{% if report.contact_or_website %}<p class="small text-secondary mb-0 mt-1">{{ report.contact_or_website }}</p>{% endif %}</div>{% endfor %}{% else %}<p class="text-secondary mb-0">You have not submitted any reports.</p>{% endif %}</div></div>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+  <div><div class="section-label mb-2"><i class="bi bi-flag"></i> Community safety</div><h1 class="h2 mb-1">Your submitted reports</h1><p class="text-secondary mb-0">Follow the review status of reports you have submitted.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('student.report_scam') }}"><i class="bi bi-plus-lg me-1"></i>New report</a>
+</div>
+<div class="card border-0"><div class="card-body p-4">
+  {% if reports %}{% for report in reports %}
+    <div class="py-3 {% if not loop.last %}border-bottom{% endif %}">
+      <div class="d-flex justify-content-between flex-wrap gap-2"><strong>{{ report.company_name }}</strong><span class="badge text-bg-{{ 'warning' if report.status == 'pending' else ('success' if report.status == 'approved' else 'secondary') }}">{{ report.status|title }}</span></div>
+      <p class="text-secondary small mb-2">{{ report.created_at.strftime('%d %b %Y, %H:%M') }}</p><p class="mb-2">{{ report.offer_details }}</p>
+      {% if report.contact_or_website %}<p class="small text-secondary mb-0"><i class="bi bi-link-45deg me-1"></i>{{ report.contact_or_website }}</p>{% endif %}
+    </div>
+  {% endfor %}{% else %}
+    <div class="text-center py-5"><div class="auth-orb mx-auto"><i class="bi bi-flag"></i></div><h2 class="h5">No reports submitted yet</h2><p class="text-secondary">If you come across a concerning offer, you can send it to the administrator for review.</p><a class="btn btn-primary" href="{{ url_for('student.report_scam') }}">Submit a report</a></div>
+  {% endif %}
+</div></div>
 {% endblock %}
