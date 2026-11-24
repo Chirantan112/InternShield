@@ -4,11 +4,12 @@ import os
 from pathlib import Path
 
 import click
-from flask import Flask, jsonify, redirect, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask_limiter.errors import RateLimitExceeded
 from flask_wtf.csrf import CSRFError
 
 from config import CONFIG_BY_NAME
-from .extensions import csrf, db, login_manager
+from .extensions import csrf, db, limiter, login_manager
 
 
 def create_app(config_name: str | None = None) -> Flask:
@@ -33,6 +34,7 @@ def create_app(config_name: str | None = None) -> Flask:
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
+    limiter.init_app(app)
 
     from .routes.auth import auth_bp
     from .routes.student import student_bp
@@ -73,28 +75,39 @@ def create_app(config_name: str | None = None) -> Flask:
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error: CSRFError):
-        return jsonify(
-            {
-                "error": "The form security token is missing or expired. "
-                "Refresh the page and try again."
-            }
-        ), 400
+        message = (
+            "The form security token is missing or expired. "
+            "Refresh the page and try again."
+        )
+        if request.accept_mimetypes.best == "application/json":
+            return jsonify({"error": message}), 400
+        return render_template("errors/error.html", code=400, message=message), 400
+
+    @app.errorhandler(RateLimitExceeded)
+    def handle_rate_limit(_error: RateLimitExceeded):
+        message = "Too many login attempts. Wait a minute before trying again."
+        return render_template("errors/error.html", code=429, message=message), 429
 
     @app.errorhandler(413)
     def handle_upload_too_large(_error):
-        return jsonify(
-            {"error": "The uploaded file is too large. The maximum size is 5 MB."}
-        ), 413
+        message = "The uploaded file is too large. The maximum size is 5 MB."
+        if request.accept_mimetypes.best == "application/json":
+            return jsonify({"error": message}), 413
+        return render_template("errors/error.html", code=413, message=message), 413
 
     @app.errorhandler(404)
     def handle_not_found(_error):
-        return jsonify({"error": "The requested page was not found."}), 404
+        message = "The page you requested could not be found."
+        if request.accept_mimetypes.best == "application/json":
+            return jsonify({"error": message}), 404
+        return render_template("errors/404.html"), 404
 
     @app.errorhandler(500)
     def handle_server_error(_error):
         db.session.rollback()
-        return jsonify(
-            {"error": "An unexpected server error occurred. Please try again."}
-        ), 500
+        message = "An unexpected server error occurred. Please try again."
+        if request.accept_mimetypes.best == "application/json":
+            return jsonify({"error": message}), 500
+        return render_template("errors/error.html", code=500, message=message), 500
 
     return app
