@@ -93,7 +93,7 @@ def remove_keyword_term(existing_pattern: str, term_to_remove: str) -> str:
     """Remove one exact legacy default term while preserving other terms."""
     terms = [
         term.strip()
-        for term in re.split(r"[,;\\n]+", existing_pattern or "")
+        for term in re.split(r"[,;\n]+", existing_pattern or "")
         if term.strip()
     ]
     remaining = [
