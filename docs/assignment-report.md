@@ -91,7 +91,7 @@ Risk bands: **0–30 Low**, **31–60 Medium**, and **61–100 High**. A single 
 
 ### 5.4 Security and privacy controls
 
-Public registration always creates a student account. Administrator accounts are created by a seed script using local environment variables; no default admin password or API key is committed. Passwords are stored as hashes using Werkzeug security helpers [6]. CSRF protection applies to state-changing forms [3]. Student history reads and deletes are owner-scoped. Uploads are parsed in memory and are not stored in the public static directory.
+Public registration always creates a student account. Administrator accounts are created by a seed script using local environment variables; no default admin password or API key is committed. Passwords are stored as hashes using Werkzeug security helpers [6]. CSRF protection applies to state-changing forms [3]. Login POST requests are rate-limited to five attempts per minute per client IP. The default limiter store is in-memory for local use; a shared Redis-compatible store should be configured for multi-worker production deployments. Student history reads, saved-result views, and deletes are owner-scoped. Uploads are parsed in memory and are not stored in the public static directory.
 
 The optional AI review is disabled by default, requires explicit consent for each submission, uses a bounded text excerpt, and requires HTTPS for remote providers. Its output is supplementary and cannot change the deterministic score.
 
@@ -129,7 +129,7 @@ The repository contains the complete source files; the table identifies where ea
 
 Automated tests are run by GitHub Actions on Python 3.12 using pytest [7]. The suite includes rule scoring and thresholds, large-input performance, TXT/PDF parsing, invalid uploads, authentication, role restrictions, student data isolation, rule administration, report review, seeding, and optional AI safeguards.
 
-**Verified final code CI:** 45 automated tests passed in 4.80 seconds on the GitHub Actions runner using Python 3.12. Python module compilation also passed. The run is recorded at https://github.com/Chirantan112/InternShield/actions/runs/45144802303. This is the CI suite duration, not the measured end-to-end response time on the demonstration laptop.
+**Verified final code CI:** 61 automated tests passed in 6.60 seconds on the GitHub Actions runner using Python 3.12. Python module compilation also passed. The run is recorded at https://github.com/Chirantan112/InternShield/actions/runs/45322809170. This is the CI suite duration, not the measured end-to-end response time on the demonstration laptop.
 
 | Test ID | Test scenario | Expected result | Result |
 |---|---|---|---|
