@@ -123,7 +123,8 @@ def test_formatting_regex_detects_repeated_punctuation_and_caps():
     repeated = analyze_offer("APPLY NOW!!!", [formatting_rule])
     capitalized = analyze_offer("INTERNSHIP OPPORTUNITY", [formatting_rule])
     assert repeated["score"] == 5
-    assert capitalized["score"] == 5
+    assert capitalized["score"] == 0
+    assert capitalized["flags"] == []
 
 
 def test_sensitive_identity_and_otp_terms_are_flagged():
@@ -257,3 +258,19 @@ def test_real_offer_scarcity_wording_detects_singular_scholarship_slot():
     result = analyze_offer(offer, [configured])
     assert result["score"] == 15
     assert result["flags"][0]["rule_name"] == "Urgency or pressure tactics"
+
+
+
+def test_normal_uppercase_headings_do_not_trigger_formatting_flag():
+    formatting_rule = rule(
+        "Formatting",
+        r"(?:[!?.,]){3,}",
+        5,
+        match_type="regex",
+    )
+    result = analyze_offer(
+        "INTERNSHIP OPPORTUNITY\nAPPLICATION PROCESS\nPLEASE READ THE DETAILS",
+        [formatting_rule],
+    )
+    assert result["score"] == 0
+    assert result["flags"] == []
