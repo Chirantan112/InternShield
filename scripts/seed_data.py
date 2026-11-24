@@ -57,7 +57,7 @@ DEFAULT_RULES = [
     {
         "name": "Unrealistic employment promises",
         "description": "The offer contains unusually strong guarantees or compensation promises that should be independently verified.",
-        "pattern": "guaranteed job, 100% placement, guaranteed placement, earn lakhs without work, no interview required",
+        "pattern": "guaranteed job, guaranteed placement, 100% guaranteed placement, 100% job placement guarantee, 100 percent placement guarantee, earn lakhs without work, no interview required",
         "points": 15,
     },
     {
@@ -87,6 +87,19 @@ def merge_keyword_patterns(existing_pattern: str, default_pattern: str) -> str:
             known_terms.add(candidate.casefold())
 
     return ", ".join(merged_terms)
+
+
+def remove_keyword_term(existing_pattern: str, term_to_remove: str) -> str:
+    """Remove one exact legacy default term while preserving other terms."""
+    terms = [
+        term.strip()
+        for term in re.split(r"[,;\\n]+", existing_pattern or "")
+        if term.strip()
+    ]
+    remaining = [
+        term for term in terms if term.casefold() != term_to_remove.casefold()
+    ]
+    return ", ".join(remaining)
 
 
 def required_env(name: str) -> str:
@@ -139,7 +152,11 @@ def seed() -> None:
             )
             added += 1
         elif item.get("match_type", "keyword") == "keyword" and existing.match_type == "keyword":
-            merged_pattern = merge_keyword_patterns(existing.pattern, item["pattern"])
+            current_pattern = existing.pattern
+            if item["name"] == "Unrealistic employment promises":
+                # The former broad phrase also matched "100% placement assistance".
+                current_pattern = remove_keyword_term(current_pattern, "100% placement")
+            merged_pattern = merge_keyword_patterns(current_pattern, item["pattern"])
             if merged_pattern != existing.pattern:
                 existing.pattern = merged_pattern
                 updated += 1
