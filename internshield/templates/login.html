@@ -1,34 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Log in · InternShield{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-12 col-md-8 col-lg-5">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body p-4 p-md-5">
-        <p class="text-primary fw-semibold text-uppercase small mb-2">Welcome back</p>
-        <h1 class="h3 mb-2">Log in to InternShield</h1>
-        <p class="text-secondary mb-4">Access your offer checks and reports securely.</p>
+<div class="row g-4 auth-layout justify-content-center">
+  <div class="col-lg-5 d-none d-lg-block">
+    <section class="auth-aside d-flex flex-column justify-content-between">
+      <div>
+        <span class="hero-kicker"><i class="bi bi-shield-check"></i> Make every opportunity count</span>
+        <h2 class="mt-4 mb-3">A little caution can protect your next big move.</h2>
+        <p>Review internship and job offers with clear signals, practical context, and a record of your checks.</p>
+      </div>
+      <div>
+        <div class="auth-feature"><i class="bi bi-check-circle-fill"></i><span>Understand the warning signs behind a risk score.</span></div>
+        <div class="auth-feature"><i class="bi bi-chat-square-text-fill"></i><span>Get useful questions to ask before you commit.</span></div>
+        <div class="auth-feature"><i class="bi bi-lock-fill"></i><span>Keep your analysis history in your account.</span></div>
+      </div>
+      <p class="small mb-0 mt-5">InternShield is a screening assistant, not a fraud verdict service.</p>
+    </section>
+  </div>
+  <div class="col-12 col-md-9 col-lg-5">
+    <div class="card auth-card border-0">
+      <div class="card-body">
+        <div class="auth-orb"><i class="bi bi-shield-lock-fill"></i></div>
+        <p class="text-primary text-uppercase small fw-bold mb-2">Welcome back</p>
+        <h1 class="h3 mb-2">Sign in to your workspace</h1>
+        <p class="text-secondary mb-4">Continue reviewing opportunities with confidence.</p>
         <form method="post" action="{{ url_for('auth.login') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="mb-3">
             <label for="email" class="form-label">Email address</label>
-            <input class="form-control" id="email" name="email" type="email"
-                   autocomplete="email" maxlength="255" required autofocus>
+            <input class="form-control" id="email" name="email" type="email" autocomplete="email" maxlength="255" placeholder="you@example.com" required autofocus>
           </div>
           <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input class="form-control" id="password" name="password" type="password"
-                   autocomplete="current-password" required>
+            <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
           </div>
           <div class="form-check mb-4">
             <input class="form-check-input" id="remember" name="remember" type="checkbox">
-            <label class="form-check-label" for="remember">Remember me on this device</label>
+            <label class="form-check-label small" for="remember">Remember me on this device</label>
           </div>
-          <button class="btn btn-primary w-100" type="submit">Log in</button>
+          <button class="btn btn-primary w-100" type="submit">Sign in <i class="bi bi-arrow-right ms-1"></i></button>
         </form>
-        <p class="text-center text-secondary mt-4 mb-0">
-          New to InternShield? <a href="{{ url_for('auth.register') }}">Create a student account</a>.
-        </p>
+        <p class="text-center text-secondary mt-4 mb-0 small">New to InternShield? <a href="{{ url_for('auth.register') }}">Create a student account</a>.</p>
       </div>
     </div>
   </div>
