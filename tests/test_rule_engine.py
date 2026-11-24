@@ -158,13 +158,12 @@ def test_realistic_paid_training_offer_phrases_are_detected():
 
     result = analyze_offer(offer, configured_rules)
 
-    assert result["score"] == 85
+    assert result["score"] == 65
     assert result["risk_level"] == "high"
     detected_names = {flag["rule_name"] for flag in result["flags"]}
     assert "Upfront fees or deposits" in detected_names
     assert "Sensitive personal or financial information" in detected_names
     assert "Urgency or pressure tactics" in detected_names
-    assert "Unrealistic employment promises" in detected_names
     assert "Suspicious formatting or language" in detected_names
 
 
@@ -274,3 +273,31 @@ def test_normal_uppercase_headings_do_not_trigger_formatting_flag():
     )
     assert result["score"] == 0
     assert result["flags"] == []
+
+
+
+def test_placement_assistance_is_not_scored_as_a_guaranteed_job():
+    from scripts.seed_data import DEFAULT_RULES
+
+    configured_rules = [
+        rule(
+            item["name"],
+            item["pattern"],
+            item["points"],
+            match_type=item.get("match_type", "keyword"),
+        )
+        for item in DEFAULT_RULES
+    ]
+    assistance = analyze_offer(
+        "We provide 100% placement assistance and career support.",
+        configured_rules,
+    )
+    guarantee = analyze_offer(
+        "The program provides guaranteed placement after training.",
+        configured_rules,
+    )
+    assert assistance["score"] == 0
+    assert "Unrealistic employment promises" not in {
+        flag["rule_name"] for flag in assistance["flags"]
+    }
+    assert guarantee["score"] == 15
