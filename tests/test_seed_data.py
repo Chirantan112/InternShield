@@ -64,7 +64,15 @@ def test_seed_migrates_only_the_legacy_default_formatting_regex(app, monkeypatch
             points=9,
             is_active=True,
         )
-        db.session.add_all([formatting, custom])
+        legacy_placement = DetectionRule(
+            name="Unrealistic employment promises",
+            description="Legacy default phrase list.",
+            pattern="custom administrator phrase, 100% placement, guaranteed job",
+            match_type="keyword",
+            points=15,
+            is_active=True,
+        )
+        db.session.add_all([formatting, custom, legacy_placement])
         db.session.commit()
 
         seed()
