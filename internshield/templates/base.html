@@ -3,49 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
   <meta name="description" content="InternShield helps students review internship and job offers for common warning signs.">
   <title>{% block title %}InternShield{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<body>
+  <nav class="navbar navbar-expand-lg app-navbar">
     <div class="container">
-      <a class="navbar-brand fw-semibold" href="{{ url_for('auth.login') }}">InternShield</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-              aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('student.dashboard') if current_user.is_authenticated and not current_user.is_admin else (url_for('admin.dashboard') if current_user.is_authenticated else url_for('auth.login')) }}">
+        <span class="brand-mark"><i class="bi bi-shield-lock-fill"></i></span>
+        <span>intern<span class="brand-accent">shield</span><small class="brand-caption">SMART OFFER SCREENING</small></span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="mainNav">
-        <div class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+        <div class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
           {% if current_user.is_authenticated %}
             {% if current_user.is_admin %}
-              <a class="nav-link" href="{{ url_for('admin.dashboard') }}">Admin dashboard</a>
-              <a class="nav-link" href="{{ url_for('admin.rules') }}">Rules</a>
-              <a class="nav-link" href="{{ url_for('admin.reports') }}">Reports</a>
+              <a class="nav-link {{ 'active' if request.endpoint == 'admin.dashboard' else '' }}" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-grid-1x2 me-1"></i>Overview</a>
+              <a class="nav-link {{ 'active' if request.endpoint in ['admin.rules', 'admin.create_rule', 'admin.edit_rule'] else '' }}" href="{{ url_for('admin.rules') }}"><i class="bi bi-sliders me-1"></i>Rules</a>
+              <a class="nav-link {{ 'active' if request.endpoint == 'admin.reports' else '' }}" href="{{ url_for('admin.reports') }}"><i class="bi bi-flag me-1"></i>Reports</a>
             {% else %}
-              <a class="nav-link" href="{{ url_for('student.dashboard') }}">Dashboard</a>
-              <a class="nav-link" href="{{ url_for('student.analyze') }}">Analyze</a>
-              <a class="nav-link" href="{{ url_for('student.history') }}">History</a>
-              <a class="nav-link" href="{{ url_for('student.report_scam') }}">Report</a>
+              <a class="nav-link {{ 'active' if request.endpoint == 'student.dashboard' else '' }}" href="{{ url_for('student.dashboard') }}"><i class="bi bi-grid-1x2 me-1"></i>Dashboard</a>
+              <a class="nav-link {{ 'active' if request.endpoint == 'student.analyze' else '' }}" href="{{ url_for('student.analyze') }}"><i class="bi bi-search me-1"></i>Analyze</a>
+              <a class="nav-link {{ 'active' if request.endpoint == 'student.history' else '' }}" href="{{ url_for('student.history') }}"><i class="bi bi-clock-history me-1"></i>History</a>
+              <a class="nav-link {{ 'active' if request.endpoint in ['student.report_scam', 'student.my_reports'] else '' }}" href="{{ url_for('student.report_scam') }}"><i class="bi bi-flag me-1"></i>Report</a>
             {% endif %}
-            <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline">
+            <span class="nav-divider d-none d-lg-block"></span>
+            <span class="user-chip"><i class="bi bi-person-circle"></i><span>{{ current_user.name }}</span></span>
+            <form method="post" action="{{ url_for('auth.logout') }}" class="d-inline ms-lg-2">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button class="btn btn-outline-light btn-sm" type="submit">Log out</button>
+              <button class="btn btn-nav-logout btn-sm" type="submit">Log out <i class="bi bi-arrow-right-short"></i></button>
             </form>
           {% else %}
-            <a class="nav-link" href="{{ url_for('auth.login') }}">Log in</a>
-            <a class="btn btn-primary btn-sm" href="{{ url_for('auth.register') }}">Create account</a>
+            <a class="nav-link {{ 'active' if request.endpoint == 'auth.login' else '' }}" href="{{ url_for('auth.login') }}">Log in</a>
+            <a class="btn btn-nav-cta btn-sm ms-lg-2" href="{{ url_for('auth.register') }}">Get started <i class="bi bi-arrow-up-right ms-1"></i></a>
           {% endif %}
         </div>
       </div>
     </div>
   </nav>
 
-  <main class="container py-4 py-md-5">
+  <main class="container app-main">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div aria-live="polite" aria-atomic="true">
+        <div aria-live="polite" aria-atomic="true" class="flash-stack">
           {% for category, message in messages %}
             <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
               {{ message }}
@@ -55,17 +64,15 @@
         </div>
       {% endif %}
     {% endwith %}
-
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="border-top bg-white py-3 mt-auto">
-    <div class="container small text-secondary d-flex flex-column flex-md-row justify-content-between gap-1">
-      <span>InternShield · Student offer risk screening</span>
-      <span>Risk scores are preliminary indicators, not proof of fraud.</span>
+  <footer class="app-footer">
+    <div class="container d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+      <span class="footer-brand"><i class="bi bi-shield-check me-2"></i>InternShield <span>· Student offer risk screening</span></span>
+      <span class="footer-note">Risk scores are preliminary indicators, not proof of fraud.</span>
     </div>
   </footer>
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </body>
