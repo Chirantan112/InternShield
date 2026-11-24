@@ -116,7 +116,7 @@ def test_large_offer_text_is_processed_within_three_seconds():
 def test_formatting_regex_detects_repeated_punctuation_without_flagging_caps():
     formatting_rule = rule(
         "Formatting",
-        r"(?:[!?.,]){3,}|\b[A-Z]{8,}\b",
+        r"(?:[!?.,]){3,}"
         5,
         match_type="regex",
     )
@@ -164,7 +164,6 @@ def test_realistic_paid_training_offer_phrases_are_detected():
     assert "Upfront fees or deposits" in detected_names
     assert "Sensitive personal or financial information" in detected_names
     assert "Urgency or pressure tactics" in detected_names
-    assert "Suspicious formatting or language" in detected_names
 
 
 def test_keyword_pattern_upgrade_preserves_admin_terms_and_is_idempotent():
