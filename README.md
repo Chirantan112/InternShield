@@ -46,14 +46,16 @@ The score is intentionally explainable and configurable. The current implementat
 
 ### Email verification
 
-New student accounts must verify ownership of their email address before they can sign in. InternShield sends a six-digit OTP through the Resend transactional email API. Codes expire after 10 minutes, are stored only as password hashes, allow at most five attempts, and can be resent no more than once per minute per account. Registration, verification, and resend endpoints also have IP-based rate limits. Existing accounts are preserved as verified when the additive database migration runs.
+New student accounts must verify ownership of their email address before they can sign in. InternShield sends a six-digit OTP. Codes expire after 10 minutes, are stored only as password hashes, allow at most five attempts, and can be resent no more than once per minute per account. Registration, verification, and resend endpoints also have IP-based rate limits. Existing accounts are preserved as verified when the additive database migration runs.
 
-For local or hosted email delivery, create a free Resend account, verify a sender domain/address as required by Resend, and configure:
-- `RESEND_API_KEY` — API key stored only as an environment secret.
-- `MAIL_FROM` — sender identity approved by Resend, e.g. `InternShield <verify@yourdomain.com>`.
-- `EMAIL_VERIFICATION_REQUIRED=true` — enabled by default.
+Email delivery supports authenticated SMTP and Resend. SMTP is preferred when `MAIL_SERVER` is configured; otherwise the application uses Resend. For a small academic deployment without a custom domain, Gmail SMTP can be used:
+- `MAIL_SERVER=smtp.gmail.com`
+- `MAIL_PORT=587`
+- `MAIL_USERNAME` — the Gmail address used to send messages.
+- `MAIL_PASSWORD` — a Google App Password, not the normal Gmail password. Enable Google 2-Step Verification before creating one.
+- `MAIL_DEFAULT_SENDER` — optional sender address; defaults to `MAIL_USERNAME`.
 
-Resend's published free tier currently includes 3,000 transactional emails per month with a 100-email daily cap. The sender domain must be verified before sending to arbitrary recipients; a provider account/API key alone does not guarantee deliverability. See [Resend pricing](https://resend.com/pricing).
+Gmail has provider-enforced sending and abuse limits. Use a dedicated account and do not use this setup for bulk or production-scale mail. Keep the App Password in Render environment secrets and never commit it. For Resend instead, configure `RESEND_API_KEY` and `MAIL_FROM` with a verified sender domain. `EMAIL_VERIFICATION_REQUIRED=true` is enabled by default.
 
 ## Technology
 
@@ -101,7 +103,7 @@ Use Python 3.12 or 3.13 for dependency compatibility.
    - `ADMIN_EMAIL`
    - `ADMIN_PASSWORD` (at least 10 characters)
    - `ADMIN_NAME` (optional)
-   - `RESEND_API_KEY` and `MAIL_FROM` after setting up a verified sender in Resend, so new users can receive OTP emails.
+   - `MAIL_SERVER`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, and optionally `MAIL_DEFAULT_SENDER` for Gmail SMTP; alternatively configure `RESEND_API_KEY` and `MAIL_FROM` with a verified Resend sender.
 
    These credentials are read from your local environment and are never stored in the source code. Do not commit `.env`.
 
@@ -208,4 +210,4 @@ The final submission report should include the title, problem statement, objecti
 - Browser requests receive an HTML not-found page; clients explicitly requesting JSON receive a JSON error response.
 - Saved analysis detail pages are restricted to the owning student.
 
-- Email verification is delivered through Resend; configure a verified sender and keep the API key in environment secrets. The free tier has provider-enforced sending limits.
+- Email verification supports authenticated SMTP (such as Gmail) or Resend; keep all credentials in environment secrets and observe provider sending limits.
