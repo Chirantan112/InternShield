@@ -9,7 +9,7 @@ InternShield is a student-focused Flask web application that checks internship a
 ## Features
 
 ### Student
-- Student registration, email OTP verification, login, and logout; passwords and OTPs are hashed.
+- Student registration, login, and logout; passwords are securely hashed.
 - Analyze pasted offer text or upload text-based TXT/PDF files (5 MB maximum; 50,000 characters maximum by default).
 - See Low / Medium / High risk, a capped 0–100 score, and explanations for each matched rule.
 - View and delete only your own analysis history.
@@ -188,8 +188,8 @@ InternShield/
 ## Security and limitations
 
 - Public registration always creates a student; admin creation is environment-seeded.
-- Passwords and email OTPs are stored as Werkzeug password hashes, not plaintext.
-- New student accounts cannot sign in until their email OTP is verified; existing accounts remain verified during the schema migration.
+- Passwords are stored as Werkzeug password hashes, not plaintext.
+- New student accounts are signed in immediately after registration. Email ownership is not verified, so users should register with an address they control.
 - CSRF protection is enabled for state-changing forms.
 - Student history queries and deletion are scoped to the authenticated user.
 - Upload parsing is in-memory, extension-checked, size-limited, and rejects unsupported/corrupt documents.
