@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Page not found · InternShield{% endblock %}
+{% block content %}
+<div class="row justify-content-center py-5"><div class="col-lg-7 text-center">
+  <div class="auth-orb mx-auto mb-3"><i class="bi bi-compass"></i></div>
+  <p class="section-label mb-2">Lost in navigation</p>
+  <h1 class="display-6 mb-3">404 · Page not found</h1>
+  <p class="text-secondary mb-4">This page may have moved, or the address may be incorrect.</p>
+  <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Return to InternShield</a>
+</div></div>
+{% endblock %}
